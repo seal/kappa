@@ -1,25 +1,46 @@
-#[macro_use]
-extern crate rocket;
+use axum::{
+    routing::{get, post},
+    Router,
+};
+use std::{fs::File, sync::Arc};
+use tracing::info;
+use tracing_subscriber::{filter, prelude::*};
+mod errors;
+mod models;
+mod routes;
+#[tokio::main]
+async fn main() {
+    let stdout_log = tracing_subscriber::fmt::layer().pretty();
 
-use rocket_contrib::json::Json;
-use serde::Deserialize;
-#[get("/<name>/<age>")]
-fn wave(name: Option<String>, age: u8) -> String {
-    format!("👋 Hello, {} year old named {}!", age, name)
-}
+    // A layer that logs events to a file.
+    let file = File::create("debug.log");
+    let file = match file {
+        Ok(file) => file,
+        Err(error) => panic!("Error: {:?}", error),
+    };
+    let debug_log = tracing_subscriber::fmt::layer().with_writer(Arc::new(file));
 
-#[derive(Deserialize)]
-struct Task {
-    description: String,
-    complete: bool,
-}
+    // A layer that collects metrics using specific events.
+    let metrics_layer = /* ... */ filter::LevelFilter::INFO;
 
-#[post("/todo", data = "<task>")]
-fn new(task: Json<Task>) { /* .. */
-}
-#[launch]
-fn rocket() -> _ {
-    rocket::build()
-        .mount("/", routes![wave])
-        .mount("/json", routes![new])
+    tracing_subscriber::registry()
+        .with(
+            stdout_log
+                .with_filter(filter::LevelFilter::INFO)
+                .and_then(debug_log)
+                .with_filter(filter::filter_fn(|metadata| {
+                    !metadata.target().starts_with("metrics")
+                })),
+        )
+        .with(metrics_layer.with_filter(filter::filter_fn(|metadata| {
+            metadata.target().starts_with("metrics")
+        })))
+        .init();
+
+    let app = Router::new()
+        .route("/error", get(routes::health::error_handler))
+        .route("/users", post(routes::health::create_user));
+    let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
+    info!("Starting listener on port 3000");
+    axum::serve(listener, app).await.unwrap();
 }
