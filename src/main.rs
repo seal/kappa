@@ -12,7 +12,6 @@ mod routes;
 async fn main() {
     let stdout_log = tracing_subscriber::fmt::layer().pretty();
 
-    // A layer that logs events to a file.
     let file = File::create("debug.log");
     let file = match file {
         Ok(file) => file,
