@@ -1,1 +1,3 @@
-[2m2024-02-05T15:16:25.939956Z[0m [32m INFO[0m [2mkappa[0m[2m:[0m Starting listener on port 3000
+[2m2024-02-08T14:45:00.254135Z[0m [32m INFO[0m [2mkappa[0m[2m:[0m Starting listener on port 3000
+[2m2024-02-08T14:45:00.955073Z[0m [34mDEBUG[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"SELECT * FROM container …" [3mdb.statement[0m[2m=[0m"\n\nSELECT\n  *\nFROM\n  container\n" [3mrows_affected[0m[2m=[0m4 [3mrows_returned[0m[2m=[0m4 [3melapsed[0m[2m=[0m2.277497ms
+[2m2024-02-08T14:45:12.846253Z[0m [32m INFO[0m [2mkappa::routes::containers[0m[2m:[0m Error fetching containers: pool timed out while waiting for an open connection

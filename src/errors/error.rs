@@ -13,17 +13,18 @@ pub struct AppError {
     pub message: String,
 }
 
+/*
 impl<E> From<E> for AppError
 where
     E: Into<anyhow::Error>,
 {
     fn from(err: E) -> Self {
         let anyhow_err: anyhow::Error = err.into();
-        tracing::error!(%anyhow_err);
-
+        info!(%anyhow_err);
         AppError {
             status_code: StatusCode::INTERNAL_SERVER_ERROR,
             message: format!("Something went wrong: {}", anyhow_err),
         }
     }
 }
+*/
