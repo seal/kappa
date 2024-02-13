@@ -1,4 +1,5 @@
 use axum::{
+    handler::Handler,
     routing::{get, post},
     Router,
 };
@@ -51,7 +52,11 @@ async fn main() {
 
     let app = Router::new()
         .route("/error", get(routes::health::error_handler))
-        .route("/users", post(routes::health::create_user))
+        .route("/user", post(routes::user::create_user))
+        .route(
+            "/user",
+            get(routes::user::get_user).layer(routes::middleware::auth),
+        )
         .route("/containers", get(routes::containers::get_containers))
         .route("/containers", post(routes::containers::new_container))
         .with_state(pool);

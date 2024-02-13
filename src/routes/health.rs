@@ -1,7 +1,6 @@
 use crate::errors::error::AppError;
-use crate::models::user::{CreateUser, User};
 use axum::extract::{MatchedPath, Request};
-use axum::{http::StatusCode, response::Json};
+use axum::http::StatusCode;
 use tracing::info;
 pub async fn error_handler(req: Request) -> Result<(), AppError> {
     try_thing(req).await?;
@@ -25,12 +24,4 @@ fn info_req(req: Request) {
             .map(|matched_path| matched_path.as_str().to_owned())
             .unwrap_or_default()
     );
-}
-pub async fn create_user(Json(payload): Json<CreateUser>) -> (StatusCode, Json<User>) {
-    let user = User {
-        id: 1337,
-        username: payload.username.clone(),
-    };
-
-    (StatusCode::CREATED, Json(user))
 }

@@ -1,1 +1,6 @@
-[2m2024-02-10T16:27:47.913208Z[0m [32m INFO[0m [2mkappa[0m[2m:[0m Starting listener on port 3000
+[2m2024-02-13T12:28:33.067673Z[0m [32m INFO[0m [2mkappa[0m[2m:[0m Starting listener on port 3000
+[2m2024-02-13T12:30:33.154009Z[0m [32m INFO[0m [2mkappa::routes::user[0m[2m:[0m Creating user with username usernamehere
+[2m2024-02-13T12:30:33.159072Z[0m [34mDEBUG[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"insert into \"user\"(api_key, username) …" [3mdb.statement[0m[2m=[0m"\n\ninsert into\n  \"user\"(api_key, username)\nvalues\n  ($1, $2)\n" [3mrows_affected[0m[2m=[0m1 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m3.244665ms
+[2m2024-02-13T12:30:59.503042Z[0m [32m INFO[0m [2mkappa::routes::user[0m[2m:[0m Creating user with username usernamehere
+[2m2024-02-13T12:30:59.504331Z[0m [34mDEBUG[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"insert into \"user\"(api_key, username) …" [3mdb.statement[0m[2m=[0m"\n\ninsert into\n  \"user\"(api_key, username)\nvalues\n  ($1, $2)\n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m340.625µs
+[2m2024-02-13T12:30:59.504417Z[0m [32m INFO[0m [2mkappa::routes::user[0m[2m:[0m Error inserting user: error returned from database: duplicate key value violates unique constraint "unique_username"
