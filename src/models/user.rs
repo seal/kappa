@@ -5,7 +5,7 @@ pub struct CreateUser {
     pub username: String,
 }
 
-#[derive(Serialize, Clone)]
+#[derive(Serialize, Clone, Debug)]
 pub struct User {
     pub user_id: Uuid,
     pub username: String,

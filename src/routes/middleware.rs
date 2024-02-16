@@ -1,18 +1,18 @@
 use axum::{
-    extract::{Extension, Request, State},
+    extract::{Request, State},
     http::StatusCode,
-    middleware::{self, Next},
-    response::{IntoResponse, Response},
-    routing::get,
-    Router,
+    middleware::Next,
+    response::Response,
 };
 use sqlx::postgres::PgPool;
 
 use crate::models;
 
 pub async fn auth(
-    mut req: Request,
-    db_pool: State<PgPool>,
+    req: Request,
+    //db_pool: State<PgPool>,
+    executor: tokio::runtime::Handle,
+
     next: Next,
 ) -> Result<Response, StatusCode> {
     let auth_header = req
@@ -26,31 +26,19 @@ pub async fn auth(
         return Err(StatusCode::UNAUTHORIZED);
     };
 
-    if let Some(current_user) = authorize_current_user(auth_header, db_pool).await {
-        req.extensions_mut().insert(current_user);
-        Ok(next.run(req).await)
-    } else {
-        Err(StatusCode::UNAUTHORIZED)
-    }
-}
-
-async fn authorize_current_user(
-    _auth_token: &str,
-    db_pool: State<PgPool>,
-) -> Option<models::user::User> {
-    // Use the db_pool to interact with the database
-    // For example, perform a SQL query using sqlx
-    // Replace the following with your actual query logic
     let result = sqlx::query_as!(
         models::user::User,
         r#"SELECT user_id, api_key, username FROM "user" WHERE api_key = $1"#,
-        _auth_token.to_string()
+        auth_header.to_string()
     )
-    .fetch_one(db_pool)
+    .fetch_one(executor)
     .await;
 
     match result {
-        Ok(user) => Some(user),
-        Err(_) => None,
+        Ok(user) => {
+            req.extensions_mut().insert(user);
+            Ok(next.run(req).await)
+        }
+        Err(_) => Err(StatusCode::UNAUTHORIZED),
     }
 }
