@@ -10,7 +10,6 @@ use tracing::info;
 pub async fn new_container(
     State(pool): State<PgPool>,
     Json(payload): Json<NewContainer>,
-    // req: Request,
 ) -> Result<Json<Success>, AppError> {
     sqlx::query!(
         r#"
