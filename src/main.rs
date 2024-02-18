@@ -1,14 +1,16 @@
 use axum::http::StatusCode;
-use axum::Json;
+use axum::middleware;
+use http::HeaderMap;
+use sqlx::postgres::PgPool;
+
 use axum::{
     extract::Request,
     routing::{get, post},
     Router,
 };
+use axum::{extract::State, middleware::Next, response::Response};
 use errors::error::AppError;
 use models::user::User;
-use std::task::{Context, Poll};
-use tower::{Layer, Service};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 use std::time::Duration;
@@ -58,16 +60,22 @@ async fn main() {
         })))
         .init();
 
+    /*
     let state = MyState {
         db_pool: pool.clone(),
         user: None,
     };
+    */
     let app = Router::new()
         .route("/error", get(routes::health::error_handler))
         .route("/user", post(routes::user::create_user))
         .route("/user", get(routes::user::get_user))
         .route("/containers", get(routes::containers::get_containers))
-        .route_layer(MyLayer { state })
+        //.route_layer(MyLayer { state })
+        .route_layer(middleware::from_fn_with_state(
+            pool.clone(),
+            require_authentication,
+        ))
         .route("/containers", post(routes::containers::new_container))
         .with_state(pool);
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
@@ -75,6 +83,42 @@ async fn main() {
     axum::serve(listener, app).await.unwrap();
 }
 
+pub async fn require_authentication(
+    State(pool): State<PgPool>,
+    mut request: Request,
+    next: Next,
+) -> Result<Response, AppError> {
+    let api_key = match request.headers().get("api-key") {
+        Some(value) => match value.to_str() {
+            Ok(api_key) => api_key.to_string(),
+            Err(_) => "none".to_string(),
+        },
+        None => "none".to_string(),
+    };
+    info!("api key {}", api_key);
+    let user: Result<User, sqlx::Error> = Ok(sqlx::query_as!(
+        User,
+        r#"
+    SELECT * FROM "user"
+    WHERE api_key = $1
+    "#,
+        api_key,
+    )
+    .fetch_one(&pool)
+    .await
+    .map_err(|e| {
+        info!("Error finding user: {}", e);
+        AppError {
+            status_code: StatusCode::INTERNAL_SERVER_ERROR,
+            message: format!("Error finding user: {}", e),
+        }
+    })?);
+    if let Ok(user) = user {
+        request.extensions_mut().insert(user);
+    }
+    Ok(next.run(request).await)
+}
+/*
 #[derive(Debug, Clone)]
 struct MyState {
     db_pool: sqlx::PgPool,
@@ -114,9 +158,16 @@ where
     fn poll_ready(&mut self, cx: &mut Context<'_>) -> Poll<Result<(), Self::Error>> {
         self.inner.poll_ready(cx)
     }
-
+    /*
     fn call(&mut self, req: Request<B>) -> Self::Future {
         let state = self.state.clone();
+        let api_key = match req.headers().get("api-key") {
+            Some(value) => match value.to_str() {
+                Ok(api_key) => api_key.to_string(),
+                Err(_) => "none".to_string(),
+            },
+            None => "none".to_string(),
+        };
         let db_future = async move {
             let user: Result<User, sqlx::Error> = sqlx::query_as!(
                 User,
@@ -124,7 +175,7 @@ where
                 SELECT * FROM "user"
                 WHERE api_key = $1
                 "#,
-                "92fd244a-df5a-4025-a8c9-c77af829c164"
+                api_key
             )
             .fetch_one(&state.db_pool)
             .await;
@@ -133,11 +184,15 @@ where
 
             if let Ok(user) = user {
                 println!("{:?}", user);
+                //req.extensions_mut().insert(user);
             } else {
                 print!("none");
             }
         };
         tokio::spawn(db_future);
+
         self.inner.call(req) // Continue processing the request
     }
+    */
 }
+*/

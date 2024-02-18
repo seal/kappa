@@ -1,3 +1,13 @@
-[2m2024-02-16T12:41:42.733476Z[0m [32m INFO[0m [2mkappa[0m[2m:[0m Starting listener on port 3000
-[2m2024-02-16T12:41:50.337280Z[0m [34mDEBUG[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"SELECT * FROM container …" [3mdb.statement[0m[2m=[0m"\n\nSELECT\n  *\nFROM\n  container\n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m967.223µs
-[2m2024-02-16T12:41:50.384974Z[0m [34mDEBUG[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"SELECT * FROM \"user\" …" [3mdb.statement[0m[2m=[0m"\n\nSELECT\n  *\nFROM\n  \"user\"\nWHERE\n  api_key = $1\n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m1 [3melapsed[0m[2m=[0m865.598µs
+[2m2024-02-18T13:14:58.069411Z[0m [32m INFO[0m [2mkappa[0m[2m:[0m Starting listener on port 3000
+[2m2024-02-18T13:15:01.875619Z[0m [32m INFO[0m [2mkappa[0m[2m:[0m api key none
+[2m2024-02-18T13:15:01.877428Z[0m [34mDEBUG[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"SELECT * FROM \"user\" …" [3mdb.statement[0m[2m=[0m"\n\nSELECT\n  *\nFROM\n  \"user\"\nWHERE\n  api_key = $1\n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m782.172µs
+[2m2024-02-18T13:15:01.877514Z[0m [32m INFO[0m [2mkappa[0m[2m:[0m Error finding user: no rows returned by a query that expected to return at least one row
+[2m2024-02-18T13:15:01.883583Z[0m [32m INFO[0m [2mkappa[0m[2m:[0m api key none
+[2m2024-02-18T13:15:01.884268Z[0m [34mDEBUG[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"SELECT * FROM \"user\" …" [3mdb.statement[0m[2m=[0m"\n\nSELECT\n  *\nFROM\n  \"user\"\nWHERE\n  api_key = $1\n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m117.395µs
+[2m2024-02-18T13:15:01.884307Z[0m [32m INFO[0m [2mkappa[0m[2m:[0m Error finding user: no rows returned by a query that expected to return at least one row
+[2m2024-02-18T13:15:23.969989Z[0m [32m INFO[0m [2mkappa[0m[2m:[0m api key none
+[2m2024-02-18T13:15:23.970974Z[0m [34mDEBUG[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"SELECT * FROM \"user\" …" [3mdb.statement[0m[2m=[0m"\n\nSELECT\n  *\nFROM\n  \"user\"\nWHERE\n  api_key = $1\n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m243.772µs
+[2m2024-02-18T13:15:23.971032Z[0m [32m INFO[0m [2mkappa[0m[2m:[0m Error finding user: no rows returned by a query that expected to return at least one row
+[2m2024-02-18T13:15:23.976892Z[0m [32m INFO[0m [2mkappa[0m[2m:[0m api key none
+[2m2024-02-18T13:15:23.977573Z[0m [34mDEBUG[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"SELECT * FROM \"user\" …" [3mdb.statement[0m[2m=[0m"\n\nSELECT\n  *\nFROM\n  \"user\"\nWHERE\n  api_key = $1\n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m124.206µs
+[2m2024-02-18T13:15:23.977622Z[0m [32m INFO[0m [2mkappa[0m[2m:[0m Error finding user: no rows returned by a query that expected to return at least one row
