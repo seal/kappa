@@ -1,8 +1,1 @@
-[2m2024-02-28T13:58:46.337058Z[0m [32m INFO[0m [2mkappa[0m[2m:[0m Starting listener on port 3000
-[2m2024-02-28T14:06:14.571570Z[0m [32m INFO[0m [2mkappa::routes::middleware[0m[2m:[0m api key b32838df-99a7-49ae-8a54-47d74a2ddb1a
-[2m2024-02-28T14:06:14.573182Z[0m [34mDEBUG[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"SELECT * FROM \"user\" …" [3mdb.statement[0m[2m=[0m"\n\nSELECT\n  *\nFROM\n  \"user\"\nWHERE\n  api_key = $1\n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m1 [3melapsed[0m[2m=[0m720.742µs
-[2m2024-02-28T14:06:14.651615Z[0m [34mDEBUG[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"SELECT * FROM container …" [3mdb.statement[0m[2m=[0m"\n\nSELECT\n  *\nFROM\n  container\n" [3mrows_affected[0m[2m=[0m10 [3mrows_returned[0m[2m=[0m10 [3melapsed[0m[2m=[0m729.473µs
-[2m2024-02-28T14:06:17.272128Z[0m [32m INFO[0m [2mkappa::routes::middleware[0m[2m:[0m api key b32838df-99a7-49ae-8a54-47d74a2ddb1a
-[2m2024-02-28T14:06:17.273314Z[0m [34mDEBUG[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"SELECT * FROM \"user\" …" [3mdb.statement[0m[2m=[0m"\n\nSELECT\n  *\nFROM\n  \"user\"\nWHERE\n  api_key = $1\n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m1 [3melapsed[0m[2m=[0m231.591µs
-[2m2024-02-28T14:06:17.276865Z[0m [34mDEBUG[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"SELECT * FROM container …" [3mdb.statement[0m[2m=[0m"\n\nSELECT\n  *\nFROM\n  container\nWHERE\n  container_id = $1\n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m1 [3melapsed[0m[2m=[0m544.482µs
-[2m2024-02-28T14:06:17.276953Z[0m [32m INFO[0m [2mkappa::routes::containers[0m[2m:[0m Got container Record { container_id: 0809809f-3263-4c50-b0a2-931bcd4ff3a7, language: "go", port: 1234 }
+[2m2024-02-28T14:25:49.441422Z[0m [32m INFO[0m [2mkappa[0m[2m:[0m Starting listener on port 3000
