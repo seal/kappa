@@ -10,5 +10,13 @@ pub struct Container {
 #[derive(Deserialize)]
 pub struct NewContainer {
     pub language: String,
-    pub port: i32,
+}
+#[derive(Deserialize)]
+pub struct QueryContainer {
+    pub container_id: String,
+}
+#[derive(Deserialize, Serialize)]
+pub struct ReturnMessage {
+    pub container_id: String,
+    pub message: String,
 }

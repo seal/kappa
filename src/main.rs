@@ -56,6 +56,7 @@ async fn main() {
         .route("/user", get(routes::user::get_user))
         .route("/containers", post(routes::containers::new_container))
         .route("/containers", get(routes::containers::get_containers))
+        .route("/trigger", post(routes::containers::trigger_container))
         .layer(middleware::from_fn_with_state(pool.clone(), api_key_auth));
     let app = Router::new()
         .route("/user", post(routes::user::create_user))
