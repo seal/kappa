@@ -1,25 +1,53 @@
+use std::fs::File;
+use std::io::Write;
+
 use crate::errors::error::AppError;
 use crate::models::container::{Container, NewContainer};
 use crate::models::success::Success;
 use crate::models::user::User;
+use axum::body::Bytes;
+use axum::extract::{Multipart, Query};
 use axum::{extract::State, Extension};
 use axum::{http::StatusCode, Json};
+//use futures_util::stream::StreamExt;
 use sqlx::postgres::PgPool;
 use tracing::info;
 
 pub async fn new_container(
     State(pool): State<PgPool>,
-    Json(payload): Json<NewContainer>,
+    query: Query<NewContainer>,
+    mut multipart: Multipart,
 ) -> Result<Json<Success>, AppError> {
-    sqlx::query!(
+    let mut file_b = Bytes::default();
+    while let Some(field) = multipart.next_field().await.unwrap() {
+        let name = field.name().unwrap();
+        match name {
+            "file" => {
+                file_b = field.bytes().await.map_err(|e| AppError {
+                    status_code: StatusCode::INTERNAL_SERVER_ERROR,
+                    message: format!("Error reading file: {}", e),
+                })?
+            }
+            _ => {
+                return Err(AppError {
+                    status_code: StatusCode::INTERNAL_SERVER_ERROR,
+                    message: format!("Error with field name {}", name),
+                })
+            }
+        }
+    }
+    info!("Received file with bytes {:?}", file_b);
+    //File::create(path)
+    let rec = sqlx::query!(
         r#"
             insert into "container"(language, port)
             values ($1, $2)
+            RETURNING container_id
         "#,
-        payload.language,
-        payload.port
+        query.language,
+        query.port
     )
-    .execute(&pool)
+    .fetch_one(&pool)
     .await
     .map_err(|e| {
         info!("Error inserting container: {}", e);
@@ -28,9 +56,19 @@ pub async fn new_container(
             message: format!("Error inserting into container : {}", e),
         }
     })?;
-
+    let mut file = File::create(format!("./files/{}", rec.container_id)).map_err(|e| AppError {
+        status_code: StatusCode::INTERNAL_SERVER_ERROR,
+        message: format!("Error saving file {}", e),
+    })?;
+    file.write_all(&file_b).map_err(|e| AppError {
+        status_code: StatusCode::INTERNAL_SERVER_ERROR,
+        message: format!("Error saving file {}", e),
+    })?;
     Ok(Json(Success {
-        message: "successfully created container".to_string(),
+        message: format!(
+            "successfully created container with id {}",
+            rec.container_id
+        ),
     }))
 }
 
