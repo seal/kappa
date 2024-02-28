@@ -1,7 +1,0 @@
-[2m2024-02-28T12:57:49.201109Z[0m [32m INFO[0m [2mkappa[0m[2m:[0m Starting listener on port 3000
-[2m2024-02-28T12:57:50.799600Z[0m [32m INFO[0m [2mkappa::routes::middleware[0m[2m:[0m api key e89f005e-1640-4ed4-b725-606f80017a4c
-[2m2024-02-28T12:57:50.802272Z[0m [34mDEBUG[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"SELECT * FROM \"user\" …" [3mdb.statement[0m[2m=[0m"\n\nSELECT\n  *\nFROM\n  \"user\"\nWHERE\n  api_key = $1\n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m1 [3melapsed[0m[2m=[0m1.744473ms
-[2m2024-02-28T12:57:50.865788Z[0m [34mDEBUG[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"SELECT * FROM container …" [3mdb.statement[0m[2m=[0m"\n\nSELECT\n  *\nFROM\n  container\n" [3mrows_affected[0m[2m=[0m3 [3mrows_returned[0m[2m=[0m3 [3melapsed[0m[2m=[0m516.501µs
-[2m2024-02-28T12:57:58.855807Z[0m [32m INFO[0m [2mkappa::routes::middleware[0m[2m:[0m api key fix
-[2m2024-02-28T12:57:58.856694Z[0m [34mDEBUG[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"SELECT * FROM \"user\" …" [3mdb.statement[0m[2m=[0m"\n\nSELECT\n  *\nFROM\n  \"user\"\nWHERE\n  api_key = $1\n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m201.691µs
-[2m2024-02-28T12:57:58.856766Z[0m [32m INFO[0m [2mkappa::routes::middleware[0m[2m:[0m Error finding user: no rows returned by a query that expected to return at least one row
