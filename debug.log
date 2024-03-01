@@ -1,6 +1,1 @@
-[2m2024-02-28T14:25:49.441422Z[0m [32m INFO[0m [2mkappa[0m[2m:[0m Starting listener on port 3000
-[2m2024-02-28T14:37:17.721658Z[0m [32m INFO[0m [2mkappa::routes::middleware[0m[2m:[0m api key b32838df-99a7-49ae-8a54-47d74a2ddb1a
-[2m2024-02-28T14:37:17.723963Z[0m [34mDEBUG[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"SELECT * FROM \"user\" …" [3mdb.statement[0m[2m=[0m"\n\nSELECT\n  *\nFROM\n  \"user\"\nWHERE\n  api_key = $1\n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m1 [3melapsed[0m[2m=[0m1.297575ms
-[2m2024-02-28T14:37:19.031137Z[0m [32m INFO[0m [2mkappa::routes::middleware[0m[2m:[0m api key b32838df-99a7-49ae-8a54-47d74a2ddb1a
-[2m2024-02-28T14:37:19.032227Z[0m [34mDEBUG[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"SELECT * FROM \"user\" …" [3mdb.statement[0m[2m=[0m"\n\nSELECT\n  *\nFROM\n  \"user\"\nWHERE\n  api_key = $1\n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m1 [3melapsed[0m[2m=[0m221.191µs
-[2m2024-02-28T14:37:19.097077Z[0m [34mDEBUG[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"SELECT * FROM container …" [3mdb.statement[0m[2m=[0m"\n\nSELECT\n  *\nFROM\n  container\n" [3mrows_affected[0m[2m=[0m10 [3mrows_returned[0m[2m=[0m10 [3melapsed[0m[2m=[0m533.552µs
+[2m2024-03-01T14:02:35.863819Z[0m [32m INFO[0m [2mkappa[0m[2m:[0m Starting listener on port 3000

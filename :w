@@ -10,7 +10,9 @@ import (
 	"log"
 	"net/http"
 	"reflect"
+	"strconv"
 	"strings"
+	"time"
 )
 
 // Pretend there's a server here
@@ -20,36 +22,46 @@ type invoke struct {
 	headers http.Header
 }
 
-const ContextKey = "bg-ctx-key"
-
-type ContextValues struct {
-	ID      string
-	Headers http.Header
-}
-
 func InvokeDetails() invoke {
-	i := invoke{
+	return invoke{
 		id:      "ID HERE",
 		payload: []byte(`{"message":"John"}`),
-		headers: http.Header{},
+		headers: http.Header{
+			"runtime-deadline-ms": []string{"100"},
+		},
 	}
-	return i
 }
 
+const (
+	msPerS  = int64(time.Second / time.Millisecond)
+	nsPerMS = int64(time.Millisecond / time.Nanosecond)
+)
+
+func unixMS(ms int64) time.Time {
+	return time.Unix(ms/msPerS, (ms%msPerS)*nsPerMS)
+}
 func Start(handler interface{}) {
 
 	h := reflectHandler(handler)
 	id := InvokeDetails()
-	bg := context.Background()
-	ctx := context.WithValue(bg, ContextKey, ContextValues{
-		ID:      id.id,
-		Headers: id.headers,
-	})
+	deadline, err := parseDeadline(&id)
+	if err != nil {
+		panic(err)
+	}
+	ctx, cancel := context.WithDeadline(context.Background(), deadline)
+	defer cancel()
 	response, err := h.Invoke(ctx, []byte(`{"message":"John"}`))
 	if err != nil {
 		panic(err)
 	}
 	log.Println("Got value of ", string(response), " from function")
+}
+func parseDeadline(i *invoke) (time.Time, error) {
+	deadlineEpochMS, err := strconv.ParseInt(i.headers.Get("runtime-deadline-ms"), 10, 64)
+	if err != nil {
+		return time.Time{}, fmt.Errorf("failed to parse deadline: %v", err)
+	}
+	return unixMS(deadlineEpochMS), nil
 }
 
 type HandlerFunc func(context.Context, []byte) (io.Reader, error)
@@ -118,6 +130,7 @@ func reflectHandler(f interface{}) handlerFunc {
 			event := reflect.New(eventType)
 
 			if err := decoder.Decode(event.Interface()); err != nil {
+				log.Println("error one")
 				return nil, err
 			}
 			if nil != trace.RequestEvent {
