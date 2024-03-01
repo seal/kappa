@@ -81,13 +81,6 @@ type jsonOutBuffer struct {
 	*bytes.Buffer
 }
 
-type handlerTraceKey struct{}
-
-type HandlerTrace struct {
-	RequestEvent  func(context.Context, interface{})
-	ResponseEvent func(context.Context, interface{})
-}
-
 func reflectHandler(f interface{}) handlerFunc {
 	handler := reflect.ValueOf(f)
 	handlerType := reflect.TypeOf(f)
@@ -107,7 +100,6 @@ func reflectHandler(f interface{}) handlerFunc {
 		encoder := json.NewEncoder(out)
 		decoder.DisallowUnknownFields()
 
-		trace, _ := ctx.Value(handlerTraceKey{}).(HandlerTrace)
 		var args []reflect.Value
 		if takesContext {
 			args = append(args, reflect.ValueOf(ctx))
@@ -119,9 +111,6 @@ func reflectHandler(f interface{}) handlerFunc {
 
 			if err := decoder.Decode(event.Interface()); err != nil {
 				return nil, err
-			}
-			if nil != trace.RequestEvent {
-				trace.RequestEvent(ctx, event.Elem().Interface())
 			}
 			args = append(args, event.Elem())
 		}
@@ -136,9 +125,6 @@ func reflectHandler(f interface{}) handlerFunc {
 		var val interface{}
 		if len(response) > 1 {
 			val = response[0].Interface()
-			if nil != trace.ResponseEvent {
-				trace.ResponseEvent(ctx, val)
-			}
 		}
 		if err := encoder.Encode(val); err != nil {
 			// if response is not JSON serializable, but the response type is a reader, return it as-is
