@@ -124,7 +124,6 @@ func reflectHandler(f interface{}) handlerFunc {
 	}
 
 	takesContext, err := handlerTakesContext(handlerType)
-	log.Println(takesContext, err)
 	if err != nil {
 		return errorHandler(err)
 	}
@@ -142,7 +141,6 @@ func reflectHandler(f interface{}) handlerFunc {
 		}
 		// 1 / two values
 		if (handlerType.NumIn() == 1 && !takesContext) || handlerType.NumIn() == 2 {
-			log.Println(handlerType.NumIn(), takesContext)
 			eventType := handlerType.In(handlerType.NumIn() - 1)
 			event := reflect.New(eventType)
 
