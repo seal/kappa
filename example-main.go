@@ -11,7 +11,7 @@ import (
 )
 
 func main() {
-	utils.Start(HandleRequestString)
+	utils.Start(HandleRequestEvent)
 }
 
 /*
@@ -48,9 +48,8 @@ Request must be triggered with json body that matches the struct
 Response will be marshalled to json
 */
 func HandleRequestEvent(ctx context.Context, event MyEvent) (Response, error) {
-	log.Println("inside function, message recieved ", event.Message)
 
-	return Response{Value: "here"}, nil
+	return Response{Value: "Returning message received - " + event.Message}, nil
 }
 
 type Response struct {

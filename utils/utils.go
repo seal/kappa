@@ -11,6 +11,9 @@ import (
 	"net/http"
 	"reflect"
 	"strings"
+	"time"
+
+	"github.com/gorilla/mux"
 )
 
 // Pretend there's a server here
@@ -27,32 +30,64 @@ type ContextValues struct {
 	Headers http.Header
 }
 
-func InvokeDetails() invoke {
+func invokeDetails(r *http.Request, b []byte) invoke {
 	i := invoke{
-		id:      "ID HERE",
-		payload: []byte(`{"message":"John"}`),
-		headers: http.Header{},
+		id:      r.URL.Query().Get("id"),
+		payload: b,
+		headers: r.Header.Clone(),
 	}
+
 	return i
 }
-
 func Start(handler interface{}) {
+	r := mux.NewRouter()
+	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		body, err := io.ReadAll(r.Body)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(`{
+                "error":"` + err.Error() + `"
+            }`))
+			return
+		}
+		defer r.Body.Close()
+		newInvoke := invokeDetails(r, body)
+		h := reflectHandler(handler)
+		response, err := startDetails(h, newInvoke)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(`{
+                "error":"` + err.Error() + `"
+            }`))
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+		w.Write(response)
+	})
+	http.Handle("/", r)
+	srv := &http.Server{
+		Handler: r,
+		Addr:    "0.0.0.0:5182",
+		// Good practice: enforce timeouts for servers you create!
+		WriteTimeout: 15 * time.Second,
+		ReadTimeout:  15 * time.Second,
+	}
 
-	h := reflectHandler(handler)
-	id := InvokeDetails()
+	log.Fatal(srv.ListenAndServe())
+
+	//h := reflectHandler(handler)
+	//startDetails(h)
+}
+func startDetails(h handlerFunc, id invoke) ([]byte, error) {
 	bg := context.Background()
 	ctx := context.WithValue(bg, ContextKey, ContextValues{
 		ID:      id.id,
 		Headers: id.headers,
 	})
-	response, err := h.Invoke(ctx, []byte(`{"message":"John"}`))
-	if err != nil {
-		panic(err)
-	}
-	log.Println("Got value of ", string(response), " from function")
-}
+	response, err := h.Invoke(ctx, id.payload)
+	return response, err
 
-type HandlerFunc func(context.Context, []byte) (io.Reader, error)
+}
 
 func (h handlerFunc) Invoke(ctx context.Context, payload []byte) ([]byte, error) {
 	response, err := h(ctx, payload)
@@ -89,6 +124,7 @@ func reflectHandler(f interface{}) handlerFunc {
 	}
 
 	takesContext, err := handlerTakesContext(handlerType)
+	log.Println(takesContext, err)
 	if err != nil {
 		return errorHandler(err)
 	}
@@ -105,7 +141,8 @@ func reflectHandler(f interface{}) handlerFunc {
 			args = append(args, reflect.ValueOf(ctx))
 		}
 		// 1 / two values
-		if handlerType.NumIn() == 1 && !takesContext || handlerType.NumIn() == 2 {
+		if (handlerType.NumIn() == 1 && !takesContext) || handlerType.NumIn() == 2 {
+			log.Println(handlerType.NumIn(), takesContext)
 			eventType := handlerType.In(handlerType.NumIn() - 1)
 			event := reflect.New(eventType)
 
@@ -114,7 +151,6 @@ func reflectHandler(f interface{}) handlerFunc {
 			}
 			args = append(args, event.Elem())
 		}
-		//}
 
 		response := handler.Call(args)
 		if len(response) > 0 {
