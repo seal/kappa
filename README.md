@@ -24,6 +24,7 @@ This includes create user, container, run container etc
 
 
 ### Todo
+Turso DB?
 #### For gRPC things use Tonic, not default thing
 1 - Create logging system of sorts, gRPC system ? 
 2 - Split program - Dockerise and running should be a seperate program to allow for multiple systems running later on
