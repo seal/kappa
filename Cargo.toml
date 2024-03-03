@@ -20,4 +20,5 @@ uuid = { version = "1.7.0", features = ["serde", "v4"] }
 http = "1.0.0"
 tower = "0.4.13"
 zip = "0.6.6"
+async-std = "1.12.0"
 

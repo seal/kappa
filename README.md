@@ -24,5 +24,9 @@ This includes create user, container, run container etc
 
 
 ### Todo
-Validate file names on creation
-Currently no validation, just assumes it'll work 
+1 - Create logging system of sorts, gRPC system ? 
+2 - Split program - Dockerise and running should be a seperate program to allow for multiple systems running later on
+    ( Rest gateway to main PC, gRPC to container running machines) 
+2 - Validate file names on creation
+3 - Currently no validation, just assumes it'll work 
+

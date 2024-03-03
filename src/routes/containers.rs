@@ -1,3 +1,4 @@
+use crate::utils::dockerise;
 use std::fs::{self, File};
 use std::io;
 use std::io::Write;
@@ -61,9 +62,9 @@ pub async fn new_container(
     }
     let mut file_b = Bytes::default();
     while let Some(field) = multipart.next_field().await.unwrap() {
-        let name = field.name().unwrap();
+        let name = field.name();
         match name {
-            "file" => {
+            Some("file") => {
                 file_b = field.bytes().await.map_err(|e| AppError {
                     status_code: StatusCode::INTERNAL_SERVER_ERROR,
                     message: format!("Error reading file: {}", e),
@@ -72,7 +73,7 @@ pub async fn new_container(
             _ => {
                 return Err(AppError {
                     status_code: StatusCode::INTERNAL_SERVER_ERROR,
-                    message: format!("Error with field name {}", name),
+                    message: format!("Error with field name {:?}", name),
                 })
             }
         }
@@ -96,11 +97,13 @@ pub async fn new_container(
             message: format!("Error inserting into container : {}", e),
         }
     })?;
-    let mut file =
-        File::create(format!("./zip/{}.zip", rec.container_id)).map_err(|e| AppError {
+    let mut file = File::create(format!("./zip/{}.zip", rec.container_id)).map_err(|e| {
+        info!("Error saving file: {}", e);
+        AppError {
             status_code: StatusCode::INTERNAL_SERVER_ERROR,
             message: format!("Error saving file {}", e),
-        })?;
+        }
+    })?;
     file.write_all(&file_b).map_err(|e| AppError {
         status_code: StatusCode::INTERNAL_SERVER_ERROR,
         message: format!("Error saving file {}", e),
@@ -123,12 +126,6 @@ pub async fn new_container(
             None => continue,
         };
 
-        println!(
-            "File {} extracted to \"{}\" ({} bytes)",
-            i,
-            outpath.display(),
-            file.size()
-        );
         if let Some(p) = outpath.parent() {
             if !p.exists() {
                 fs::create_dir_all(p).map_err(|e| AppError {
@@ -137,10 +134,13 @@ pub async fn new_container(
                 })?;
             }
         }
-        println!("outpath, {:?}", outpath);
         let mut zip_outpath = PathBuf::from(format!("zip/{}", rec.container_id));
         zip_outpath.push(outpath);
-        println!("zip_outpath {}", zip_outpath.to_string_lossy());
+        info!(
+            "File extracted to \"{}\" ({} bytes)",
+            zip_outpath.display(),
+            file.size()
+        );
         fs::create_dir(format!("zip/{}", rec.container_id)).map_err(|e| AppError {
             status_code: StatusCode::BAD_REQUEST,
             message: format!("{} Error create dir container ID ", e),
@@ -153,7 +153,6 @@ pub async fn new_container(
             status_code: StatusCode::BAD_REQUEST,
             message: format!("{} Error copying data to outfile", e),
         })?;
-
         // Get and Set permissions
         #[cfg(unix)]
         {
@@ -169,6 +168,7 @@ pub async fn new_container(
         }
     }
 
+    dockerise::dockerise_container(rec.container_id).await;
     Ok(Json(ReturnMessage {
         message: "successfully created container {}".to_string(),
         container_id: rec.container_id.to_string(),
@@ -196,8 +196,6 @@ pub async fn get_containers(
             message: format!("Error fetching containers: {}", e),
         }
     })?;
-
-    //println!("{:?}", containers);
 
     Ok(Json(containers))
 }

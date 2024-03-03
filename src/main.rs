@@ -18,6 +18,7 @@ use dotenv::dotenv;
 mod errors;
 mod models;
 mod routes;
+mod utils;
 #[tokio::main]
 async fn main() {
     let stdout_log = tracing_subscriber::fmt::layer().pretty();
