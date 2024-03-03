@@ -22,3 +22,7 @@ Http server will be created on port 3000
 Run the go program in test/ for testing functionality 
 This includes create user, container, run container etc
 
+
+### Todo
+Validate file names on creation
+Currently no validation, just assumes it'll work 

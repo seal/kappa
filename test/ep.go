@@ -39,7 +39,7 @@ func StartEpTest() {
 			fmt.Scanln(&i2)
 			switch i2 {
 			case 1:
-				createContainer("go", 1234, "env.json")
+				createContainer("go", 1234, "test_zip.zip")
 			case 2:
 				var l string
 				log.Println("enter language")
@@ -111,7 +111,7 @@ func createContainer(language string, port int, filePath string) {
 	}
 	defer file.Close()
 
-	part, err := writer.CreateFormFile("file", "debug.log")
+	part, err := writer.CreateFormFile("file", filePath)
 	if err != nil {
 		panic(err)
 	}

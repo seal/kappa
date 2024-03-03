@@ -1,16 +1,8 @@
-[2m2024-03-03T15:02:28.721173Z[0m [32m INFO[0m [2mkappa[0m[2m:[0m Starting listener on port 3000
-[2m2024-03-03T15:02:48.913535Z[0m [32m INFO[0m [2mkappa::routes::user[0m[2m:[0m Creating user with username bobby
-[2m2024-03-03T15:02:48.915540Z[0m [34mDEBUG[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"insert into \"user\"(api_key, username) …" [3mdb.statement[0m[2m=[0m"\n\ninsert into\n  \"user\"(api_key, username)\nvalues\n  ($1, $2)\n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m0 [3melapsed[0m[2m=[0m1.130824ms
-[2m2024-03-03T15:02:48.915596Z[0m [32m INFO[0m [2mkappa::routes::user[0m[2m:[0m Error inserting user: error returned from database: duplicate key value violates unique constraint "unique_username"
-[2m2024-03-03T15:02:56.089754Z[0m [32m INFO[0m [2mkappa::routes::middleware[0m[2m:[0m api key b32838df-99a7-49ae-8a54-47d74a2ddb1a
-[2m2024-03-03T15:02:56.090874Z[0m [34mDEBUG[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"SELECT * FROM \"user\" …" [3mdb.statement[0m[2m=[0m"\n\nSELECT\n  *\nFROM\n  \"user\"\nWHERE\n  api_key = $1\n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m1 [3melapsed[0m[2m=[0m440.641µs
-[2m2024-03-03T15:02:58.624252Z[0m [32m INFO[0m [2mkappa::routes::middleware[0m[2m:[0m api key b32838df-99a7-49ae-8a54-47d74a2ddb1a
-[2m2024-03-03T15:02:58.625395Z[0m [34mDEBUG[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"SELECT * FROM \"user\" …" [3mdb.statement[0m[2m=[0m"\n\nSELECT\n  *\nFROM\n  \"user\"\nWHERE\n  api_key = $1\n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m1 [3melapsed[0m[2m=[0m240.461µs
-[2m2024-03-03T15:02:58.692348Z[0m [34mDEBUG[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"SELECT * FROM container …" [3mdb.statement[0m[2m=[0m"\n\nSELECT\n  *\nFROM\n  container\n" [3mrows_affected[0m[2m=[0m10 [3mrows_returned[0m[2m=[0m10 [3melapsed[0m[2m=[0m857.992µs
-[2m2024-03-03T15:03:02.770023Z[0m [32m INFO[0m [2mkappa::routes::middleware[0m[2m:[0m api key b32838df-99a7-49ae-8a54-47d74a2ddb1a
-[2m2024-03-03T15:03:02.771433Z[0m [34mDEBUG[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"SELECT * FROM \"user\" …" [3mdb.statement[0m[2m=[0m"\n\nSELECT\n  *\nFROM\n  \"user\"\nWHERE\n  api_key = $1\n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m1 [3melapsed[0m[2m=[0m288.341µs
-[2m2024-03-03T15:03:02.771744Z[0m [35mTRACE[0m [2mmulter::buffer[0m[2m:[0m finding next field: Some("file")    
-[2m2024-03-03T15:03:02.771769Z[0m [35mTRACE[0m [2mmulter::buffer[0m[2m:[0m new field found at 50    
-[2m2024-03-03T15:03:02.771804Z[0m [32m INFO[0m [2mkappa::routes::containers[0m[2m:[0m Received file with bytes length of 50
+[2m2024-03-03T15:35:19.322470Z[0m [32m INFO[0m [2mkappa[0m[2m:[0m Starting listener on port 3000
+[2m2024-03-03T15:35:21.240286Z[0m [32m INFO[0m [2mkappa::routes::middleware[0m[2m:[0m api key b32838df-99a7-49ae-8a54-47d74a2ddb1a
+[2m2024-03-03T15:35:21.241820Z[0m [34mDEBUG[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"SELECT * FROM \"user\" …" [3mdb.statement[0m[2m=[0m"\n\nSELECT\n  *\nFROM\n  \"user\"\nWHERE\n  api_key = $1\n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m1 [3melapsed[0m[2m=[0m691.552µs
+[2m2024-03-03T15:35:21.241956Z[0m [35mTRACE[0m [2mmulter::buffer[0m[2m:[0m finding next field: Some("file")    
+[2m2024-03-03T15:35:21.241977Z[0m [35mTRACE[0m [2mmulter::buffer[0m[2m:[0m new field found at 351    
+[2m2024-03-03T15:35:21.242009Z[0m [32m INFO[0m [2mkappa::routes::containers[0m[2m:[0m Received file with bytes length of 351
 
-[2m2024-03-03T15:03:02.773944Z[0m [34mDEBUG[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"insert into \"container\"(language, port) …" [3mdb.statement[0m[2m=[0m"\n\ninsert into\n  \"container\"(language, port)\nvalues\n  ($1, $2) RETURNING container_id\n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m1 [3melapsed[0m[2m=[0m1.018943ms
+[2m2024-03-03T15:35:21.320986Z[0m [34mDEBUG[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"insert into \"container\"(language, port) …" [3mdb.statement[0m[2m=[0m"\n\ninsert into\n  \"container\"(language, port)\nvalues\n  ($1, $2) RETURNING container_id\n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m1 [3melapsed[0m[2m=[0m1.604364ms

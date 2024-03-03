@@ -1,5 +1,7 @@
-use std::fs::File;
+use std::fs::{self, File};
+use std::io;
 use std::io::Write;
+use std::path::PathBuf;
 
 use crate::errors::error::AppError;
 use crate::models::container::{Container, NewContainer, QueryContainer, ReturnMessage};
@@ -94,14 +96,79 @@ pub async fn new_container(
             message: format!("Error inserting into container : {}", e),
         }
     })?;
-    let mut file = File::create(format!("./files/{}", rec.container_id)).map_err(|e| AppError {
-        status_code: StatusCode::INTERNAL_SERVER_ERROR,
-        message: format!("Error saving file {}", e),
-    })?;
+    let mut file =
+        File::create(format!("./zip/{}.zip", rec.container_id)).map_err(|e| AppError {
+            status_code: StatusCode::INTERNAL_SERVER_ERROR,
+            message: format!("Error saving file {}", e),
+        })?;
     file.write_all(&file_b).map_err(|e| AppError {
         status_code: StatusCode::INTERNAL_SERVER_ERROR,
         message: format!("Error saving file {}", e),
     })?;
+    let zip_file = fs::File::open(format!("./zip/{}.zip", rec.container_id)).unwrap();
+    let mut archive = zip::ZipArchive::new(zip_file).unwrap();
+    if archive.len() > 1 {
+        return Err(AppError {
+            status_code: StatusCode::BAD_REQUEST,
+            message: "zip has too many files".to_string(),
+        });
+    }
+    for i in 0..archive.len() {
+        let mut file = archive.by_index(i).map_err(|e| AppError {
+            status_code: StatusCode::BAD_REQUEST,
+            message: format!("{} Error archive by index", e),
+        })?;
+        let outpath = match file.enclosed_name() {
+            Some(path) => path.to_owned(),
+            None => continue,
+        };
+
+        println!(
+            "File {} extracted to \"{}\" ({} bytes)",
+            i,
+            outpath.display(),
+            file.size()
+        );
+        if let Some(p) = outpath.parent() {
+            if !p.exists() {
+                fs::create_dir_all(p).map_err(|e| AppError {
+                    status_code: StatusCode::BAD_REQUEST,
+                    message: format!("{} Error create dir all", e),
+                })?;
+            }
+        }
+        println!("outpath, {:?}", outpath);
+        let mut zip_outpath = PathBuf::from(format!("zip/{}", rec.container_id));
+        zip_outpath.push(outpath);
+        println!("zip_outpath {}", zip_outpath.to_string_lossy());
+        fs::create_dir(format!("zip/{}", rec.container_id)).map_err(|e| AppError {
+            status_code: StatusCode::BAD_REQUEST,
+            message: format!("{} Error create dir container ID ", e),
+        })?;
+        let mut outfile = fs::File::create(&zip_outpath).map_err(|e| AppError {
+            status_code: StatusCode::BAD_REQUEST,
+            message: format!("{} Error creating outfile ", e),
+        })?;
+        io::copy(&mut file, &mut outfile).map_err(|e| AppError {
+            status_code: StatusCode::BAD_REQUEST,
+            message: format!("{} Error copying data to outfile", e),
+        })?;
+
+        // Get and Set permissions
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            if let Some(mode) = file.unix_mode() {
+                fs::set_permissions(&zip_outpath, fs::Permissions::from_mode(mode)).map_err(
+                    |e| AppError {
+                        status_code: StatusCode::BAD_REQUEST,
+                        message: format!("{} Error setting permissions for outfile", e),
+                    },
+                )?;
+            }
+        }
+    }
+
     Ok(Json(ReturnMessage {
         message: "successfully created container {}".to_string(),
         container_id: rec.container_id.to_string(),
