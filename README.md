@@ -23,12 +23,19 @@ Run the go program in test/ for testing functionality
 This includes create user, container, run container etc
 
 
-### Todo
-Turso DB?
-#### For gRPC things use Tonic, not default thing
+#### For gRPC things use Tonic, not default package
 1 - Create logging system of sorts, gRPC system ? 
+
 2 - Split program - Dockerise and running should be a seperate program to allow for multiple systems running later on
     ( Rest gateway to main PC, gRPC to container running machines) 
-2 - Validate file names on creation
-3 - Currently no validation, just assumes it'll work 
+    (Create two bin's, client & server essentially)
+
+3 - Validate file names on creation, main.go etc?
+
+4 - Currently no validation, just assumes it'll work 
+
+
+### Tests
+All tests are written in Go, to test rust http functionality 
+Re-write in Rust at later date.
 

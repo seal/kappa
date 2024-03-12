@@ -1,9 +1,9 @@
-[2m2024-03-03T16:01:34.754662Z[0m [32m INFO[0m [2mkappa[0m[2m:[0m Starting listener on port 3000
-[2m2024-03-03T16:01:36.128764Z[0m [32m INFO[0m [2mkappa::routes::middleware[0m[2m:[0m api key b32838df-99a7-49ae-8a54-47d74a2ddb1a
-[2m2024-03-03T16:01:36.131105Z[0m [34mDEBUG[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"SELECT * FROM \"user\" …" [3mdb.statement[0m[2m=[0m"\n\nSELECT\n  *\nFROM\n  \"user\"\nWHERE\n  api_key = $1\n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m1 [3melapsed[0m[2m=[0m1.412004ms
-[2m2024-03-03T16:01:36.131275Z[0m [35mTRACE[0m [2mmulter::buffer[0m[2m:[0m finding next field: Some("file")    
-[2m2024-03-03T16:01:36.131301Z[0m [35mTRACE[0m [2mmulter::buffer[0m[2m:[0m new field found at 351    
-[2m2024-03-03T16:01:36.131332Z[0m [32m INFO[0m [2mkappa::routes::containers[0m[2m:[0m Received file with bytes length of 351
+[2m2024-03-09T19:19:32.186347Z[0m [32m INFO[0m [2mkappa[0m[2m:[0m Starting listener on port 3000
+[2m2024-03-09T19:19:54.018830Z[0m [32m INFO[0m [2mkappa::routes::middleware[0m[2m:[0m api key bc4c3506-51f8-4de7-bc70-5b3b691d68cb
+[2m2024-03-09T19:19:54.029150Z[0m [34mDEBUG[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"SELECT * FROM \"user\" …" [3mdb.statement[0m[2m=[0m"\n\nSELECT\n  *\nFROM\n  \"user\"\nWHERE\n  api_key = $1\n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m1 [3melapsed[0m[2m=[0m6.238006ms
+[2m2024-03-09T19:19:54.030933Z[0m [35mTRACE[0m [2mmulter::buffer[0m[2m:[0m finding next field: Some("file")    
+[2m2024-03-09T19:19:54.031017Z[0m [35mTRACE[0m [2mmulter::buffer[0m[2m:[0m new field found at 351    
+[2m2024-03-09T19:19:54.031184Z[0m [32m INFO[0m [2mkappa::routes::containers[0m[2m:[0m Received file with bytes length of 351
 
-[2m2024-03-03T16:01:36.208797Z[0m [34mDEBUG[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"insert into \"container\"(language, port) …" [3mdb.statement[0m[2m=[0m"\n\ninsert into\n  \"container\"(language, port)\nvalues\n  ($1, $2) RETURNING container_id\n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m1 [3melapsed[0m[2m=[0m1.189393ms
-[2m2024-03-03T16:01:36.209020Z[0m [32m INFO[0m [2mkappa::routes::containers[0m[2m:[0m File extracted to "zip/82bc95d6-bc9c-40ed-92df-6a8921c4ecb2/main.go" (278 bytes)
+[2m2024-03-09T19:19:54.113329Z[0m [34mDEBUG[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"insert into \"container\"(language, port) …" [3mdb.statement[0m[2m=[0m"\n\ninsert into\n  \"container\"(language, port)\nvalues\n  ($1, $2) RETURNING container_id\n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m1 [3melapsed[0m[2m=[0m10.896404ms
+[2m2024-03-09T19:19:54.113711Z[0m [32m INFO[0m [2mkappa::routes::containers[0m[2m:[0m File extracted to "zip/4c13fc99-fc0f-4a6d-8a26-89d6251333eb/main.go" (278 bytes)
