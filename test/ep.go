@@ -178,7 +178,7 @@ func getContainers() []container {
 
 	log.Println("Got containers:")
 	for _, c := range containers {
-		log.Printf("Container ID: %s, Language: %s, Port: %d\n", c.ContainerID, c.Language, c.Port)
+		log.Printf("Container ID: %s, Language: %s\n", c.ContainerID, c.Language)
 	}
 	return containers
 }
@@ -187,7 +187,6 @@ func getContainers() []container {
 type container struct {
 	ContainerID uuid.UUID `json:"container_id"`
 	Language    string    `json:"language"`
-	Port        int       `json:"port"`
 }
 
 func getAPIKey() string {

@@ -1,5 +1,6 @@
 //use std::{thread, time};
 
+use port_scanner::local_port_available;
 use std::fs::File;
 use std::io::prelude::*;
 use std::process::Command;
@@ -9,6 +10,15 @@ pub async fn dockerise_container(id: uuid::Uuid) {
     // Can now create docker container
     // Need to create logging system text
     println!("Got uuid {:?}", id);
+    let p = get_available_port();
+    let port: u16;
+    match p {
+        Some(val) => port = val,
+        None => {
+            eprintln!("No ports available");
+            return;
+        }
+    }
     if let Err(e) = create_dockerfile(&id) {
         //TODO Change this to gRPC logging ?
         eprintln!("Error creating docker file {}", e);
@@ -21,8 +31,8 @@ pub async fn dockerise_container(id: uuid::Uuid) {
         eprintln!("Error building Docker image: {}", e);
         return;
     }
-    info!("Built docker image with UUID:{}", id);
-    if let Err(e) = run_docker_container(&id) {
+    info!("Built docker image with UUID:{} & port {}", id, port);
+    if let Err(e) = run_docker_container(&id, &port) {
         //TODO Change this to gRPC logging ?
         eprintln!("Error running Docker image: {}", e);
         return;
@@ -30,10 +40,26 @@ pub async fn dockerise_container(id: uuid::Uuid) {
     info!("Successfully started docker container");
 }
 
-fn run_docker_container(uuid: &Uuid) -> std::io::Result<()> {
+fn get_available_port() -> Option<u16> {
+    let mut x = 5000; // 5000-6000
+    while x < 6000 {
+        if local_port_available(x) {
+            return Some(x);
+        }
+        x += 1;
+    }
+    return None;
+}
+fn run_docker_container(uuid: &Uuid, port: &u16) -> std::io::Result<()> {
     let image_name = format!("kappa-go:{}", uuid);
     let output = Command::new("docker")
-        .args(&["run", "--rm", "-p", "5182:5182", &image_name])
+        .args(&[
+            "run",
+            "--rm",
+            "-p",
+            format!("{}:5182", port).as_str(),
+            &image_name,
+        ])
         .output()?;
 
     if !output.status.success() {

@@ -1097,6 +1097,7 @@ dependencies = [
  "axum",
  "dotenv",
  "http",
+ "port_scanner",
  "serde",
  "serde_json",
  "sqlx",
@@ -1538,6 +1539,12 @@ dependencies = [
  "tracing",
  "windows-sys 0.52.0",
 ]
+
+[[package]]
+name = "port_scanner"
+version = "0.1.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "325a6d2ac5dee293c3b2612d4993b98aec1dff096b0a2dae70ed7d95784a05da"
 
 [[package]]
 name = "powerfmt"

@@ -82,12 +82,11 @@ pub async fn new_container(
     info!("Received file with bytes length of {:?}\n", file_b.len());
     let rec = sqlx::query!(
         r#"
-            insert into "container"(language, port, user_id)
-            values ($1::TEXT, $2::INTEGER, $3::UUID)
+            insert into "container"(language, user_id)
+            values ($1::TEXT, $2::UUID)
             RETURNING container_id
         "#,
         query.language,
-        1234,
         user.user_id
     )
     .fetch_one(&pool)

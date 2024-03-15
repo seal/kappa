@@ -1,11 +1,1 @@
-[2m2024-03-15T18:08:19.137682Z[0m [32m INFO[0m [2mkappa[0m[2m:[0m Starting listener on port 3000
-[2m2024-03-15T18:08:26.537065Z[0m [32m INFO[0m [2mkappa::routes::middleware[0m[2m:[0m api key 32579ae2-0939-4eb3-8ce5-c160ca326da6
-[2m2024-03-15T18:08:26.545548Z[0m [34mDEBUG[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"SELECT * FROM \"user\" …" [3mdb.statement[0m[2m=[0m"\n\nSELECT\n  *\nFROM\n  \"user\"\nWHERE\n  api_key = $1\n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m1 [3melapsed[0m[2m=[0m3.503923ms [3melapsed_secs[0m[2m=[0m0.003503923
-[2m2024-03-15T18:08:26.545942Z[0m [35mTRACE[0m [2mmulter::buffer[0m[2m:[0m finding next field: Some("file")    
-[2m2024-03-15T18:08:26.545965Z[0m [35mTRACE[0m [2mmulter::buffer[0m[2m:[0m new field found at 351    
-[2m2024-03-15T18:08:26.545999Z[0m [32m INFO[0m [2mkappa::routes::containers[0m[2m:[0m Received file with bytes length of 351
-
-[2m2024-03-15T18:08:26.592527Z[0m [34mDEBUG[0m [2msqlx::query[0m[2m:[0m [3msummary[0m[2m=[0m"insert into \"container\"(language, port, …" [3mdb.statement[0m[2m=[0m"\n\ninsert into\n  \"container\"(language, port, user_id)\nvalues\n  ($1 :: TEXT, $2 :: INTEGER, $3 :: UUID) RETURNING container_id\n" [3mrows_affected[0m[2m=[0m0 [3mrows_returned[0m[2m=[0m1 [3melapsed[0m[2m=[0m2.870903ms [3melapsed_secs[0m[2m=[0m0.002870903
-[2m2024-03-15T18:08:26.592858Z[0m [32m INFO[0m [2mkappa::routes::containers[0m[2m:[0m File extracted to "zip/c27429e6-0de6-4868-a33a-03d0652e4209/main.go" (278 bytes)
-[2m2024-03-15T18:08:26.593152Z[0m [32m INFO[0m [2mkappa::docker::docker[0m[2m:[0m Created docker file with UUID:c27429e6-0de6-4868-a33a-03d0652e4209
-[2m2024-03-15T18:08:36.651022Z[0m [32m INFO[0m [2mkappa::docker::docker[0m[2m:[0m Build docker image with UUID:c27429e6-0de6-4868-a33a-03d0652e4209
+[2m2024-03-15T19:08:01.986263Z[0m [32m INFO[0m [2mserver[0m[2m:[0m Starting listener on port 3000
