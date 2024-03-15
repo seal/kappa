@@ -1,8 +1,8 @@
 //use std::{thread, time};
 
-use port_scanner::local_port_available;
 use std::fs::File;
 use std::io::prelude::*;
+use std::net::TcpListener;
 use std::process::Command;
 use tracing::info;
 use uuid::Uuid;
@@ -38,6 +38,13 @@ pub async fn dockerise_container(id: uuid::Uuid) {
         return;
     }
     info!("Successfully started docker container");
+}
+
+fn local_port_available(port: u16) -> bool {
+    match TcpListener::bind(("127.0.0.1", port)) {
+        Ok(_) => true,
+        Err(_) => false,
+    }
 }
 
 fn get_available_port() -> Option<u16> {
