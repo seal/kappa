@@ -76,7 +76,7 @@ func triggerContainer(c []container) {
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("API-KEY", apiKey)
 	values := req.URL.Query()
-	values.Add("container_id", c[cIndex].ContainerID.String())
+	values.Add("container_id", c[cIndex-1].ContainerID.String())
 	req.URL.RawQuery = values.Encode()
 	client := &http.Client{}
 	resp, err := client.Do(req)
