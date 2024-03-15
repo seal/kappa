@@ -1,4 +1,4 @@
-use crate::utils::dockerise;
+use crate::docker::docker::dockerise_container;
 use std::fs::{self, File};
 use std::io;
 use std::io::Write;
@@ -48,6 +48,7 @@ pub async fn trigger_container(
 pub async fn new_container(
     State(pool): State<PgPool>,
     query: Query<NewContainer>,
+    Extension(user): Extension<User>,
     mut multipart: Multipart,
 ) -> Result<Json<ReturnMessage>, AppError> {
     match query.language.as_str() {
@@ -81,12 +82,13 @@ pub async fn new_container(
     info!("Received file with bytes length of {:?}\n", file_b.len());
     let rec = sqlx::query!(
         r#"
-            insert into "container"(language, port)
-            values ($1, $2)
+            insert into "container"(language, port, user_id)
+            values ($1::TEXT, $2::INTEGER, $3::UUID)
             RETURNING container_id
         "#,
         query.language,
         1234,
+        user.user_id
     )
     .fetch_one(&pool)
     .await
@@ -168,14 +170,13 @@ pub async fn new_container(
         }
     }
 
-    dockerise::dockerise_container(rec.container_id).await;
+    dockerise_container(rec.container_id).await;
     Ok(Json(ReturnMessage {
         message: "successfully created container {}".to_string(),
         container_id: rec.container_id.to_string(),
     }))
 }
 
-//pub async fn get_containers(State(pool): State<PgPool>) -> Result<Json<Vec<Container>>, AppError> {
 pub async fn get_containers(
     Extension(user): Extension<User>,
     State(pool): State<PgPool>,
@@ -184,8 +185,9 @@ pub async fn get_containers(
     let containers = sqlx::query_as!(
         Container,
         r#"
-        SELECT * FROM container
-        "#
+        SELECT * FROM container WHERE user_id = $1
+        "#,
+        user.user_id
     )
     .fetch_all(&pool)
     .await

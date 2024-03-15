@@ -15,6 +15,7 @@ use tracing_subscriber::{filter, prelude::*};
 use sqlx::postgres::PgPoolOptions;
 
 use dotenv::dotenv;
+mod docker;
 mod errors;
 mod models;
 mod routes;

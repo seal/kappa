@@ -6,6 +6,7 @@ pub struct Container {
     pub container_id: Uuid,
     pub language: String,
     pub port: i32,
+    pub user_id: Option<Uuid>,
 }
 #[derive(Deserialize)]
 pub struct NewContainer {

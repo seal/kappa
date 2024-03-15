@@ -34,6 +34,9 @@ This includes create user, container, run container etc
 
 4 - Currently no validation, just assumes it'll work 
 
+5 - Add proper logging no eprintln in docker functions 
+^^ .... gRPC ? 
+
 
 ### Tests
 All tests are written in Go, to test rust http functionality 
