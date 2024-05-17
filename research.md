@@ -47,4 +47,75 @@ curl -X "POST" 127.0.0.1:5183
 
 - returns "here" ( as expected ) 
 
+Old docker code:
+```
+fn run_docker_container(uuid: &Uuid, port: &u16) -> Result<()> {
+    let image_name = format!("kappa-go:{}", uuid);
+    let output = Command::new("docker")
+        .args(&[
+            "run",
+            "--rm",
+            "-p",
+            format!("{}:5182", port).as_str(),
+            &image_name,
+        ])
+        .output()?;
 
+    if !output.status.success() {
+        let err = String::from_utf8_lossy(&output.stderr);
+        return Err(anyhow!("Error running docker command: {}", err));
+    }
+
+    Ok(())
+}
+fn build_docker_image(uuid: &Uuid) -> Result<()> {
+    let image_name = format!("kappa-go:{}", uuid);
+    //docker build -t kappa:UUID -f ./zip/UUID/Dockerfile ./zip/UUID
+
+    let output = Command::new("docker")
+        .args(&[
+            "build",
+            "-t",
+            &image_name,
+            "-f",
+            &format!("./zip/{}/Dockerfile", uuid),
+            &format!("./zip/{}", uuid),
+        ])
+        .output()?;
+
+    if !output.status.success() {
+        let err = String::from_utf8_lossy(&output.stderr);
+        return Err(anyhow!("error building docker image {}", err));
+    }
+
+    Ok(())
+}
+fn create_dockerfile(uuid: &Uuid) -> Result<(), anyhow::Error> {
+    let filename = format!("./zip/{}/Dockerfile", uuid);
+    let dockerfile = r#"FROM golang:1.22.1-alpine as golang
+WORKDIR /app
+COPY . . 
+RUN go mod init main.go && go mod tidy && go get .
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /server . 
+FROM gcr.io/distroless/static-debian11
+COPY --from=golang /server .
+EXPOSE 5182
+CMD ["/server"]
+
+"#;
+    let mut file = File::create(filename)?;
+    file.write_all(dockerfile.as_bytes())?;
+    Ok(())
+}
+```
+Got em running with docker 
+not yet triggering via rust 
+
+trigger manually via:
+```
+curl -X POST http://localhost:5182
+curl -X POST http://localhost:5182?id=123 -H "Custom-Header: value"
+curl -X POST http://localhost:5182 -H "Content-Type: application/json" -d '{"message": "Hello, World!"}'
+```
+Change ports to docker ports
+Also context returns a 404, I believe due to handle being a get request

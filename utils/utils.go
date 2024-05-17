@@ -40,6 +40,7 @@ func invokeDetails(r *http.Request, b []byte) invoke {
 	return i
 }
 func Start(handler interface{}) {
+
 	r := mux.NewRouter()
 	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		body, err := io.ReadAll(r.Body)
@@ -50,6 +51,7 @@ func Start(handler interface{}) {
             }`))
 			return
 		}
+		log.Println("Got body", string(body))
 		defer r.Body.Close()
 		newInvoke := invokeDetails(r, body)
 		h := reflectHandler(handler)

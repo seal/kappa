@@ -1,11 +1,14 @@
 use axum::middleware;
 
+use axum::routing::delete;
+use axum::routing::get_service;
 use axum::{
     routing::{get, post},
     Router,
 };
 use routes::middleware::api_key_auth;
 use std::time::Duration;
+use tower_http::services::ServeDir;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 use std::{fs::File, sync::Arc};
@@ -39,12 +42,12 @@ async fn main() {
         .await
         .expect("can't connect to database");
 
-    let metrics_layer = /* ... */ filter::LevelFilter::INFO;
+    let metrics_layer = /* ... */ filter::LevelFilter::DEBUG;
 
     tracing_subscriber::registry()
         .with(
             stdout_log
-                .with_filter(filter::LevelFilter::INFO)
+                .with_filter(filter::LevelFilter::DEBUG)
                 .and_then(debug_log)
                 .with_filter(filter::filter_fn(|metadata| {
                     !metadata.target().starts_with("metrics")
@@ -54,15 +57,21 @@ async fn main() {
             metadata.target().starts_with("metrics")
         })))
         .init();
+    let ui_service = get_service(ServeDir::new("ui"));
+    let ui_router = Router::new().nest_service("/", ui_service);
+
     let protected = Router::new()
         .route("/user", get(routes::user::get_user))
         .route("/containers", post(routes::containers::new_container))
         .route("/containers", get(routes::containers::get_containers))
+        .route("/containers", delete(routes::containers::delete_container))
         .route("/trigger", post(routes::containers::trigger_container))
         .layer(middleware::from_fn_with_state(pool.clone(), api_key_auth));
     let app = Router::new()
         .route("/user", post(routes::user::create_user))
+        .route("/user-htmx", post(routes::user::create_user_htmx))
         .route("/error", get(routes::health::error_handler))
+        .nest("/ui", ui_router)
         .merge(protected)
         .with_state(pool);
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();

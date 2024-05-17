@@ -23,6 +23,7 @@ func StartEpTest() {
 		log.Println("3. Get containers")
 		log.Println("4. Create container")
 		log.Println("5. Trigger container")
+		log.Println("6. Delete container")
 		fmt.Scanln(&input)
 		switch input {
 		case 1:
@@ -55,10 +56,54 @@ func StartEpTest() {
 		case 5:
 			c := getContainers()
 			triggerContainer(c)
+		case 6:
+			c := getContainers()
+			log.Println("Select a container to delete")
+			for k := range c {
+				log.Printf("%d - %s\n", k+1, c[k].ContainerID)
+			}
+			var cIndex int
+			fmt.Scanln(&cIndex)
+			deleteContainer(c[cIndex-1].ContainerID.String())
 		case 0:
 			os.Exit(1)
 		}
 	}
+}
+func deleteContainer(containerID string) {
+	apiKey := getAPIKey()
+	log.Println("Got API key:", apiKey)
+
+	req, err := http.NewRequest("DELETE", fmt.Sprintf("%s/containers", baseURL), nil)
+	if err != nil {
+		panic(err)
+	}
+
+	values := req.URL.Query()
+	values.Add("container_id", containerID)
+	req.URL.RawQuery = values.Encode()
+
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("API-KEY", apiKey)
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		panic(err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		body, _ := io.ReadAll(resp.Body)
+		log.Println("Response body:", string(body))
+		panic(fmt.Errorf("status code not 200: %d", resp.StatusCode))
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		panic(err)
+	}
+	log.Println("Response body:", string(body))
 }
 func triggerContainer(c []container) {
 	log.Println("select a container to trigger")
