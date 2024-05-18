@@ -32,20 +32,22 @@ type ContextValues struct {
 
 // MarshalJSON custom marshaller for ContextValues
 func (cv ContextValues) MarshalJSON() ([]byte, error) {
-	type Alias ContextValues
 	headers := make(map[string][]string)
 	for key, values := range cv.Headers {
 		headers[key] = values
 	}
-	return json.Marshal(&struct {
+	log.Println("id in marshal", cv.ID)
+	return json.Marshal(struct {
+		ID      string              `json:"id"`
 		Headers map[string][]string `json:"headers"`
-		*Alias
 	}{
+		ID:      cv.ID,
 		Headers: headers,
-		Alias:   (*Alias)(&cv),
 	})
 }
+
 func invokeDetails(r *http.Request, b []byte) invoke {
+	log.Println("id at invoke details", r.URL.Query().Get("container_id"))
 	i := invoke{
 		id:      r.URL.Query().Get("container_id"),
 		payload: b,
@@ -92,6 +94,7 @@ func Start(handler interface{}) {
 
 }
 func startDetails(h handlerFunc, id invoke) ([]byte, error) {
+	log.Println("ID at start details", id.id)
 	bg := context.Background()
 	ctx := context.WithValue(bg, ContextKey, ContextValues{
 		ID:      id.id,
