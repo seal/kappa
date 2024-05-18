@@ -43,6 +43,10 @@ Make sure you have the following installed:
    ```
 
 ## Usage
+### Registering a user 
+```go
+	api_key, err := client.CreateUser("http://localhost:3000", "username_here")
+```
 
 ### Creating a Function
 
@@ -52,7 +56,17 @@ Then zip via:
 ```
 zip -r my_folder.zip my_folder/*
 ```
-Upload via GoLang code
+
+### Uploading function
+
+```go
+	container3, err := c.CreateContainer(client.ContainerOptions{
+		Name:     "...namehere",
+		Language: "go", // Currently only go supported
+		Filepath: "filePath to .zip here",
+	})
+
+```
 
 ### Running the Code
 
@@ -69,36 +83,6 @@ cargo run
 ```
 The HTTP server will be created on port 3000.
 
-## Client Example
-
-Here's an example of how to use the client:
-
-```go
-// examples/client/main.go
-package main
-
-// ... (client code omitted for brevity) ...
-
-func main() {
-    c := client.NewClient("http://localhost:3000", "e1f11936-2004-46ee-b310-84ddb8fb8d14")
-
-    // Create and trigger containers for different ZIP files
-    // ... (code omitted for brevity) ...
-
-    // Delete all containers
-    containers, err := c.GetContainers()
-    if err != nil {
-        panic(err)
-    }
-    for _, container := range containers {
-        log.Println("Deleting ID", container.ID, " - with language ", container.Language)
-        err := container.Delete()
-        if err != nil {
-            panic(err)
-        }
-    }
-}
-```
 
 ## Server Example
 
@@ -113,26 +97,53 @@ package main
 ```go
 //examples/server/main.go
 func main() {
-    utils.Start(HandleRequestContext)
-    //	utils.Start(HandleRequestString)
-    //utils.Start(HandleRequestEvent)
-}
-
-// HandleRequestString returns a string response
-func HandleRequestString(ctx context.Context) (string, error) {
-    return "here", nil
+    utils.Start(FuncName)
 }
 
 // HandleRequestContext returns an IO reader response
-func HandleRequestContext(ctx context.Context) (io.Reader, error) {
-    // ... (code omitted for brevity) ...
+func FuncName(ctx context.Context) (io.Reader, error) {
+    // Code omitted
+    return strings.NewReader(body), nil
 }
 
-// HandleRequestEvent handles a custom event struct
-func HandleRequestEvent(ctx context.Context, event MyEvent) (Response, error) {
-    return Response{MessageOne: event.Message, MessageTwo: event.MessageTwo}, nil
+```
+### Other types
+
+Possible parameter types are:
+
+1:
+
+```go
+func FuncName(ctx context.Context) (string, error){
+	values := ctx.Value(utils.ContextKey).(utils.ContextValues)
+    /*
+type ContextValues struct {
+	ID      string      `json:"id"`
+	Headers http.Header `json:"headers"`
+}
+*/
 }
 ```
+
+2:
+
+```go
+func FuncName(ctx context.Context, event MyEvent) (Response, error) {
+	return Response{MessageOne: event.Message, MessageTwo: event.MessageTwo}, nil
+}
+
+type Response struct {
+	MessageOne string `json:"messageOne"`
+	MessageTwo string `json:"messagewTwo"`
+}
+type MyEvent struct {
+	Message    string `json:"message"`
+	MessageTwo string `json:"messageTwo"`
+}
+```
+
+Structs can be customized to the users need etc
+
 
 ## Functionality
 

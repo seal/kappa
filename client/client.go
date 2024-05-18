@@ -35,6 +35,44 @@ func NewClient(baseURL, apiKey string) *Client {
 	}
 }
 
+// CreateUser creates a user and returns the API-key
+func CreateUser(baseURL, username string) (string, error) {
+	reqBody := map[string]string{
+		"username": username,
+	}
+	jsonBody, err := json.Marshal(reqBody)
+	if err != nil {
+		return "", fmt.Errorf("failed to marshal request body: %w", err)
+	}
+
+	req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s/user", baseURL), bytes.NewBuffer(jsonBody))
+	if err != nil {
+		return "", fmt.Errorf("failed to create request: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("failed to send request: %w", err)
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("unexpected status code: %d", res.StatusCode)
+	}
+
+	var response struct {
+		Message string `json:"message"`
+		APIKey  string `json:"api_key"`
+	}
+	err = json.NewDecoder(res.Body).Decode(&response)
+	if err != nil {
+		return "", fmt.Errorf("failed to decode response: %w", err)
+	}
+
+	return response.APIKey, nil
+}
+
 // CreateContainer creates a new container with the provided options.
 func (c *Client) CreateContainer(opts ContainerOptions) (*Container, error) {
 	body := &bytes.Buffer{}
@@ -220,4 +258,3 @@ func (c *Container) Delete() error {
 
 	return nil
 }
-

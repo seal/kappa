@@ -8,6 +8,13 @@ import (
 )
 
 func main() {
+	// Register a new user via:
+	api_key, err := client.CreateUser("http://localhost:3000", "username_here")
+	if err != nil {
+		//Handle error
+	} else {
+		log.Println("registered and got api key", api_key)
+	}
 	c := client.NewClient("http://localhost:3000", "e1f11936-2004-46ee-b310-84ddb8fb8d14")
 
 	// 3_json.zip
