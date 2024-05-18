@@ -88,11 +88,6 @@ The HTTP server will be created on port 3000.
 
 Here's an example of how to implement the server:
 
-```go
-// examples/client/main.go
-package main
-
-```
 
 ```go
 //examples/server/main.go
