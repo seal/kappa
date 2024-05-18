@@ -145,9 +145,11 @@ async fn run_docker_container(uuid: &Uuid, port: &u16) -> Result<()> {
         .await?;
     Ok(())
 }
+// TODO REMOVE CACHE
 fn create_dockerfile(uuid: &Uuid) -> Result<(), anyhow::Error> {
     let filename = format!("./zip/{}/Dockerfile", uuid);
     let dockerfile = r#"FROM golang:1.22.1-alpine as golang
+ARG CACHEBUST=1
 WORKDIR /app
 COPY . . 
 RUN go mod init main.go && go mod tidy && go get .

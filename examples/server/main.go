@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -12,19 +11,10 @@ import (
 )
 
 func main() {
-	var i int
-	log.Println("1. String")
-	log.Println("2. Context")
-	log.Println("3. Event")
-	fmt.Scanln(&i)
-	switch i {
-	case 1:
-		utils.Start(HandleRequestString)
-	case 2:
-		utils.Start(HandleRequestContext)
-	case 3:
-		utils.Start(HandleRequestEvent)
-	}
+
+	utils.Start(HandleRequestContext)
+	//	utils.Start(HandleRequestString)
+	//utils.Start(HandleRequestEvent)
 }
 
 /*
@@ -61,13 +51,14 @@ Request must be triggered with json body that matches the struct
 Response will be marshalled to json
 */
 func HandleRequestEvent(ctx context.Context, event MyEvent) (Response, error) {
-
-	return Response{Value: "Returning message received - " + event.Message}, nil
+	return Response{MessageOne: event.Message, MessageTwo: event.MessageTwo}, nil
 }
 
 type Response struct {
-	Value string
+	MessageOne string `json:"messageOne"`
+	MessageTwo string `json:"messagewTwo"`
 }
 type MyEvent struct {
-	Message string `json:"message"`
+	Message    string `json:"message"`
+	MessageTwo string `json:"messageTwo"`
 }

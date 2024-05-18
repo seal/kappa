@@ -40,7 +40,22 @@ func StartEpTest() {
 			fmt.Scanln(&i2)
 			switch i2 {
 			case 1:
-				createContainer("go", 1234, "test_zip.zip")
+				log.Println("Enter option")
+				log.Println("1.String ")
+				log.Println("2. Context")
+				log.Println("3 Json")
+				var op int
+				fmt.Scanln(&op)
+				var filename string
+				switch op {
+				case 1:
+					filename = "./tests/1_string.zip"
+				case 2:
+					filename = "./tests/2_context.zip"
+				case 3:
+					filename = "./tests/3_json.zip"
+				}
+				createContainer("go", filename)
 			case 2:
 				var l string
 				log.Println("enter language")
@@ -48,10 +63,7 @@ func StartEpTest() {
 				var f string
 				log.Println("enter filename")
 				fmt.Scanln(&f)
-				var port int
-				log.Println("enter port")
-				fmt.Scanln(&port)
-				createContainer(l, port, f)
+				createContainer(l, f)
 			}
 		case 5:
 			c := getContainers()
@@ -112,8 +124,20 @@ func triggerContainer(c []container) {
 	}
 	var cIndex int
 	fmt.Scanln(&cIndex)
-	// post /trigger query param container_id
-	req, err := http.NewRequest("POST", fmt.Sprintf("%s/trigger", baseURL), nil)
+	log.Println("Is container json (y/n")
+	var j string
+	fmt.Scanln(&j)
+	bd := bytes.NewBuffer([]byte(`{
+        "message": " message one ",
+        "messageTwo":" message two "
+    }`))
+	var err error
+	var req *http.Request
+	if j == "y" {
+		req, err = http.NewRequest("POST", fmt.Sprintf("%s/trigger", baseURL), bd)
+	} else {
+		req, err = http.NewRequest("POST", fmt.Sprintf("%s/trigger", baseURL), nil)
+	}
 	if err != nil {
 		panic(err)
 	}
@@ -142,7 +166,7 @@ func triggerContainer(c []container) {
 	log.Println("-------------------------")
 }
 
-func createContainer(language string, port int, filePath string) {
+func createContainer(language string, filePath string) {
 	apiKey := getAPIKey()
 	log.Println("Got api key", apiKey)
 
@@ -170,7 +194,7 @@ func createContainer(language string, port int, filePath string) {
 
 	writer.Close()
 
-	req, err := http.NewRequest("POST", fmt.Sprintf("%s/containers?language=%s&port=%d", baseURL, language, port), body)
+	req, err := http.NewRequest("POST", fmt.Sprintf("%s/containers?language=%s", baseURL, language), body)
 	if err != nil {
 		panic(err)
 	}

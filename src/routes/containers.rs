@@ -328,7 +328,7 @@ pub async fn new_container(
     .await
     .map_err(|e| CustomError::DatabaseError(e))?;
     Ok(Json(ReturnMessage {
-        message: "successfully created container {}".to_string(),
+        message: "successfully created container".to_string(),
         container_id: container_id.to_string(),
     }))
 }
