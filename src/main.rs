@@ -1,4 +1,5 @@
 use axum::middleware;
+use tracing_subscriber::Registry;
 
 use axum::routing::delete;
 use axum::routing::get_service;
@@ -6,10 +7,10 @@ use axum::{
     routing::{get, post},
     Router,
 };
-use routes::middleware::api_key_auth;
+use routes::middleware::{api_key_auth, trigger_auth};
 use std::time::Duration;
 use tower_http::services::ServeDir;
-use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
+use tracing_subscriber::layer::SubscriberExt;
 
 use std::{fs::File, sync::Arc};
 use tracing::info;
@@ -33,6 +34,7 @@ async fn main() {
         Err(error) => panic!("Error: {:?}", error),
     };
     let debug_log = tracing_subscriber::fmt::layer().with_writer(Arc::new(file));
+
     let db_connection_str = std::env::var("DATABASE_URL")
         .unwrap_or_else(|_| "postgres://postgres:password@localhost".to_string());
     let pool = PgPoolOptions::new()
@@ -44,7 +46,7 @@ async fn main() {
 
     let metrics_layer = /* ... */ filter::LevelFilter::DEBUG;
 
-    tracing_subscriber::registry()
+    let subscriber = Registry::default()
         .with(
             stdout_log
                 .with_filter(filter::LevelFilter::DEBUG)
@@ -55,8 +57,11 @@ async fn main() {
         )
         .with(metrics_layer.with_filter(filter::filter_fn(|metadata| {
             metadata.target().starts_with("metrics")
-        })))
-        .init();
+        })));
+
+    tracing::subscriber::set_global_default(subscriber)
+        .expect("Failed to set global default subscriber");
+
     let ui_service = get_service(ServeDir::new("ui"));
     let ui_router = Router::new().nest_service("/", ui_service);
 
@@ -65,14 +70,21 @@ async fn main() {
         .route("/containers", post(routes::containers::new_container))
         .route("/containers", get(routes::containers::get_containers))
         .route("/containers", delete(routes::containers::delete_container))
-        .route("/trigger", post(routes::containers::trigger_container))
+        //.route("/trigger", post(routes::containers::trigger_container))
         .layer(middleware::from_fn_with_state(pool.clone(), api_key_auth));
+    let trigger = Router::new()
+        .route(
+            "/trigger",
+            get(routes::containers::trigger_container).post(routes::containers::trigger_container),
+        )
+        .layer(middleware::from_fn_with_state(pool.clone(), trigger_auth));
     let app = Router::new()
         .route("/user", post(routes::user::create_user))
         .route("/user-htmx", post(routes::user::create_user_htmx))
         .route("/error", get(routes::health::error_handler))
         .nest("/ui", ui_router)
         .merge(protected)
+        .merge(trigger)
         .with_state(pool);
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
     info!("Starting listener on port 3000");

@@ -10,12 +10,12 @@ name="kappa"
 
 [dependencies]
 anyhow = "1.0.79"
-axum = { version = "0.7.5", features = ["multipart"]}
+axum = { version = "0.7.5", features = ["multipart", "macros"]}
 serde = { version = "1.0.196", features = ["derive"] }
 serde_json = "1.0.113"
 tokio = { version = "1.36.0", features = ["full"] }
 tower-http = { version = "0.5.1", features = ["trace", "fs"] }
-tracing = "0.1.40"
+tracing = {version= "0.1.40", features=["log", "attributes"]}
 tracing-subscriber = { version = "0.3.18", features = ["env-filter"] }
 sqlx = { version = "0.7.4", features = ["runtime-tokio-rustls", "any", "postgres","uuid"] }
 dotenv = "0.15.0"
@@ -27,3 +27,10 @@ async-std = "1.12.0"
 bollard = "0.16.1"
 tar = "0.4.40"
 bytes = "1.6.0"
+reqwest = {version= "0.12.4", features = ["stream"]}
+hyper = {version="1.3.1", features=["full", "client"]}
+body = "0.1.1"
+hyper-util = { version = "0.1.3", features = ["full"] }
+serde_qs = "0.13.0"
+backtrace = "0.3.71"
+thiserror = "1.0.61"

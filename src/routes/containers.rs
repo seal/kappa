@@ -1,4 +1,16 @@
 use crate::docker::docker::dockerise_container;
+use axum::http::{HeaderMap, Method};
+use axum::response::Result;
+use reqwest::Client;
+use tracing::error;
+
+use axum::{
+    body::Bytes,
+    extract::{Extension, Query},
+    Json,
+};
+use http::StatusCode;
+use std::collections::HashMap;
 use std::fs::{self, create_dir_all, File};
 use std::io::Write;
 use std::io::{self, ErrorKind};
@@ -7,21 +19,18 @@ use std::path::PathBuf;
 use crate::errors::error::{AppError, CustomError};
 use crate::models::container::{Container, NewContainer, QueryContainer, ReturnMessage};
 use crate::models::user::User;
-use axum::body::Bytes;
-use axum::extract::{Multipart, Query};
-use axum::Json;
-use axum::{extract::State, Extension};
+use axum::extract::State;
+use axum::extract::{Multipart, RawQuery};
 use sqlx::postgres::PgPool;
 use tracing::info;
 use uuid::Uuid;
-
 pub async fn delete_container(
     State(pool): State<PgPool>,
     Extension(user): Extension<User>,
     query: Query<QueryContainer>,
 ) -> Result<Json<ReturnMessage>, AppError> {
     let container_id = uuid::Uuid::parse_str(&query.container_id)
-        .map_err(|e| CustomError::InvalidQueryParam(e.to_string()))?;
+        .map_err(|e| CustomError::InvalidQueryParam(e))?;
 
     // Check if the container exists and belongs to the user
     let container = sqlx::query!(
@@ -34,7 +43,7 @@ pub async fn delete_container(
     )
     .fetch_optional(&pool)
     .await
-    .map_err(|e| CustomError::DatabaseFetchError(e.to_string()))?;
+    .map_err(|e| CustomError::DatabaseError(e))?;
 
     if container.is_none() {
         return Err(CustomError::ContainerNotFound.into());
@@ -50,7 +59,7 @@ pub async fn delete_container(
     )
     .execute(&pool)
     .await
-    .map_err(|e| CustomError::DatabaseDeletionError(e.to_string()))?;
+    .map_err(|e| CustomError::DatabaseError(e))?;
 
     // Remove the container files and docker container
     // (You may need to implement this part based on your specific requirements)
@@ -60,6 +69,92 @@ pub async fn delete_container(
         container_id: container_id.to_string(),
     }))
 }
+#[tracing::instrument]
+pub async fn trigger_container(
+    State(pool): State<PgPool>,
+    Extension(container): Extension<Container>,
+    method: Method,
+    query: RawQuery,
+    header_map: HeaderMap,
+    body: Bytes,
+) -> Result<(StatusCode, HeaderMap, String), AppError> {
+    let target_uri = format!("http://127.0.0.1:{}", container.port.unwrap_or(0));
+    let query = query.0.map(|query_str| {
+        serde_qs::from_str::<HashMap<String, String>>(&query_str)
+            .unwrap_or_else(|err| [("error".to_string(), err.to_string())].into())
+    });
+    let body_string = match String::from_utf8(body.to_vec()) {
+        Ok(body) => body,
+        Err(_) => "".to_string(), // No body is fine
+    };
+    let client = Client::new();
+    let response = client
+        .request(method.clone(), &target_uri)
+        .query(&query)
+        .headers(header_map.clone())
+        .body(body_string.clone())
+        .send()
+        .await;
+
+    match response {
+        Ok(response) => {
+            let status_code = response.status();
+            let headers = response.headers().clone();
+            let response_body = response
+                .text()
+                .await
+                .map_err(|e| CustomError::FailedProxyRequest(e))?;
+            Ok((status_code, headers, response_body))
+        }
+        Err(e) => {
+            // If it's a connection issue, most likely the docker container is dead
+            if e.is_connect() {
+                let port = dockerise_container(Uuid::from(container.container_id))
+                    .await
+                    .map_err(|e| CustomError::DockeriseContainerError(e.to_string()))?;
+                // Send the request again after dockerizing the container
+                let client = Client::new();
+                let response = client
+                    .request(method, format!("http://127.0.0.1:{}", port))
+                    .query(&query)
+                    .headers(header_map)
+                    .body(body_string)
+                    .send()
+                    .await
+                    .map_err(|e| {
+                        error!(
+                            "failed second proxy request for ID {}",
+                            container.container_id
+                        );
+                        CustomError::FailedProxyRequest(e)
+                    })?;
+                let status_code = response.status();
+                let headers = response.headers().clone();
+                let response_body = response
+                    .text()
+                    .await
+                    .map_err(|e| CustomError::FailedProxyRequest(e))?;
+                sqlx::query!(
+                    r#"
+    UPDATE "container"
+    SET port = $1::INTEGER
+    WHERE container_id = $2::UUID
+    "#,
+                    port,
+                    container.container_id
+                )
+                .execute(&pool)
+                .await
+                .map_err(|e| CustomError::DatabaseError(e))?;
+                Ok((status_code, headers, response_body))
+            } else {
+                Err(CustomError::FailedProxyRequest(e).into())
+            }
+        }
+    }
+}
+/*
+ *
 pub async fn trigger_container(
     State(pool): State<PgPool>,
     query: Query<QueryContainer>,
@@ -81,6 +176,7 @@ pub async fn trigger_container(
         container_id: query.container_id.clone(),
     }));
 }
+*/
 pub async fn new_container(
     State(pool): State<PgPool>,
     query: Query<NewContainer>,
@@ -222,7 +318,7 @@ pub async fn new_container(
     )
     .execute(&pool)
     .await
-    .map_err(|e| CustomError::DatabaseInsertionError(e.to_string()))?;
+    .map_err(|e| CustomError::DatabaseError(e))?;
     Ok(Json(ReturnMessage {
         message: "successfully created container {}".to_string(),
         container_id: container_id.to_string(),
@@ -243,7 +339,7 @@ pub async fn get_containers(
     )
     .fetch_all(&pool)
     .await
-    .map_err(|e| CustomError::DatabaseFetchError(e.to_string()))?;
+    .map_err(|e| CustomError::DatabaseError(e))?;
 
     Ok(Json(containers))
 }

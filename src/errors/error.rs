@@ -1,8 +1,6 @@
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Json, Response};
 use serde_json::json;
-use std::fmt;
-use tracing::error;
 
 #[derive(Debug)]
 pub struct AppError {
@@ -16,22 +14,36 @@ impl IntoResponse for AppError {
     }
 }
 
-#[derive(Debug)]
+//use std::zip::result::ZipError;
+use thiserror::Error;
+//     FileReadError(#[from] io::Error),
+#[derive(Debug, Error)]
 pub enum CustomError {
-    InvalidQueryParam(String),
+    #[error("Invalid query param: {0}")]
+    InvalidQueryParam(#[from] uuid::Error),
+    #[error("Invalid language")]
     InvalidLanguage,
+    #[error("Invalid field name: {0}")]
     InvalidFieldName(String),
+    #[error("File read error: {0}")]
     FileReadError(String),
+    #[error("Directory creation error: {0}")]
     DirectoryCreationError(String),
+    #[error("File save error: {0}")]
     FileSaveError(String),
+    #[error("Zip archive error: {0}")]
     ZipArchiveError(String),
+    #[error("Dockerise container error: {0}")]
     DockeriseContainerError(String),
-    DatabaseInsertionError(String),
-    DatabaseFetchError(String),
-    DatabaseDeletionError(String),
+    #[error("Database insertion error: {0}")]
+    DatabaseError(#[from] sqlx::Error),
+    #[error("Database error: {0}")]
+    FailedProxyRequest(#[from] reqwest::Error),
+    #[error("Container not found or does not belong to user")]
     ContainerNotFound,
 }
 
+/*
 impl fmt::Display for CustomError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
@@ -54,6 +66,8 @@ impl fmt::Display for CustomError {
             CustomError::DatabaseDeletionError(msg) => {
                 write!(f, "Database deletion error: {}", msg)
             }
+            CustomError::FailedBodyRead(msg) => write!(f, "Failed body read {}", msg),
+            CustomError::FailedProxyRequest(msg) => write!(f, "failed proxy request {}", msg),
             CustomError::ContainerNotFound => {
                 write!(f, "Container not found or does not belong to user")
             }
@@ -61,9 +75,12 @@ impl fmt::Display for CustomError {
     }
 }
 
+*/
+use backtrace::Backtrace;
+
 impl From<CustomError> for AppError {
     fn from(err: CustomError) -> Self {
-        let status_code = match err {
+        let status_code = match &err {
             CustomError::InvalidQueryParam(_) => StatusCode::BAD_REQUEST,
             CustomError::InvalidLanguage => StatusCode::BAD_REQUEST,
             CustomError::InvalidFieldName(_) => StatusCode::INTERNAL_SERVER_ERROR,
@@ -72,12 +89,12 @@ impl From<CustomError> for AppError {
             CustomError::FileSaveError(_) => StatusCode::INTERNAL_SERVER_ERROR,
             CustomError::ZipArchiveError(_) => StatusCode::BAD_REQUEST,
             CustomError::DockeriseContainerError(_) => StatusCode::INTERNAL_SERVER_ERROR,
-            CustomError::DatabaseInsertionError(_) => StatusCode::INTERNAL_SERVER_ERROR,
-            CustomError::DatabaseFetchError(_) => StatusCode::INTERNAL_SERVER_ERROR,
-            CustomError::DatabaseDeletionError(_) => StatusCode::INTERNAL_SERVER_ERROR,
+            CustomError::DatabaseError(_) => StatusCode::INTERNAL_SERVER_ERROR,
             CustomError::ContainerNotFound => StatusCode::INTERNAL_SERVER_ERROR,
+            CustomError::FailedProxyRequest(_) => StatusCode::INTERNAL_SERVER_ERROR,
         };
-        error!("{}", err);
+        let backtrace = Backtrace::new();
+        tracing::error!(error.cause = ?err, error.backtrace = ?backtrace);
         AppError {
             status_code,
             message: err.to_string(),

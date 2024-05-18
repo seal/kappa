@@ -26,11 +26,12 @@ type invoke struct {
 const ContextKey = "bg-ctx-key"
 
 type ContextValues struct {
-	ID      string
-	Headers http.Header
+	ID      string      `json:"id"`
+	Headers http.Header `json:"headers"`
 }
 
 func invokeDetails(r *http.Request, b []byte) invoke {
+	log.Println(r.URL.RawQuery)
 	i := invoke{
 		id:      r.URL.Query().Get("id"),
 		payload: b,
@@ -51,7 +52,6 @@ func Start(handler interface{}) {
             }`))
 			return
 		}
-		log.Println("Got body", string(body))
 		defer r.Body.Close()
 		newInvoke := invokeDetails(r, body)
 		h := reflectHandler(handler)
@@ -70,15 +70,13 @@ func Start(handler interface{}) {
 	srv := &http.Server{
 		Handler: r,
 		Addr:    "0.0.0.0:5182",
-		// Good practice: enforce timeouts for servers you create!
-		WriteTimeout: 15 * time.Second,
-		ReadTimeout:  15 * time.Second,
+		// customers job to fix their server :)
+		WriteTimeout: 1000 * time.Second,
+		ReadTimeout:  1000 * time.Second,
 	}
 
 	log.Fatal(srv.ListenAndServe())
 
-	//h := reflectHandler(handler)
-	//startDetails(h)
 }
 func startDetails(h handlerFunc, id invoke) ([]byte, error) {
 	bg := context.Background()

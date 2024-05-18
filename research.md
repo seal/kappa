@@ -119,3 +119,45 @@ curl -X POST http://localhost:5182 -H "Content-Type: application/json" -d '{"mes
 ```
 Change ports to docker ports
 Also context returns a 404, I believe due to handle being a get request
+
+
+
+
+Trigger container ( no stream) 
+```
+pub async fn trigger_container(
+    Extension(container): Extension<Container>,
+    method: Method,
+    query: RawQuery,
+    //uri: Uri, Not needed
+    header_map: HeaderMap,
+    body: Bytes,
+) -> Result<(StatusCode, HeaderMap, String), AppError> {
+    let target_uri = format!("127.0.0.1:{}", container.port.unwrap_or(0));
+    let query = query.0.map(|query_str| {
+        serde_qs::from_str::<HashMap<String, String>>(&query_str)
+            .unwrap_or_else(|err| [("error".to_string(), err.to_string())].into())
+    });
+    let body_string = match String::from_utf8(body.to_vec()) {
+        Ok(body) => body,
+        Err(_) => "".to_string(), // No body is fine
+    };
+    let client = Client::new();
+    let response = client
+        .request(method, &target_uri)
+        .query(&query)
+        .headers(header_map)
+        .body(body_string)
+        .send()
+        .await
+        .map_err(|e| CustomError::FailedProxyRequest(e.to_string()))?;
+
+    let status_code = response.status();
+    let headers = response.headers().clone();
+    let response_body = response
+        .text()
+        .await
+        .map_err(|e| CustomError::FailedBodyRead(e.to_string()))?;
+    Ok((status_code, headers, response_body))
+}
+```

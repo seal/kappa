@@ -1,6 +1,8 @@
 use anyhow::{anyhow, Error, Result};
 use async_std::stream::StreamExt;
-use bollard::container::{Config, CreateContainerOptions, StartContainerOptions};
+use bollard::container::{
+    Config, CreateContainerOptions, ListContainersOptions, StartContainerOptions,
+};
 use bollard::image::BuildImageOptions;
 use bollard::models::HostConfig;
 use bollard::models::PortBinding;
@@ -57,6 +59,29 @@ fn get_available_port() -> Option<u16> {
 async fn run_docker_container(uuid: &Uuid, port: &u16) -> Result<()> {
     let docker = Docker::connect_with_local_defaults()?;
     let image_name = format!("kappa-go:{}", uuid);
+    // Check if a container with the same name already exists
+    let container_name = format!("kappa-container-{}", uuid);
+    let existing_container = docker
+        .list_containers(Some(ListContainersOptions {
+            all: true,
+            filters: HashMap::from([("name".to_string(), vec![container_name.clone()])]),
+            ..Default::default()
+        }))
+        .await?;
+
+    if !existing_container.is_empty() {
+        // Start the existing container
+        docker
+            .start_container(
+                &existing_container[0]
+                    .id
+                    .as_ref()
+                    .unwrap_or(&"No container id ??? ".to_string()),
+                None::<StartContainerOptions<String>>,
+            )
+            .await?;
+        return Ok(());
+    }
     //Bollard requires a tar file to have local Dockerfiles
     let tar_bytes = {
         let mut tar_buffer = Vec::new();
