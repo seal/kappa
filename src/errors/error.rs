@@ -43,8 +43,6 @@ pub enum CustomError {
     ContainerNotFound,
     #[error("Could not remove image / container")]
     DockerError(#[from] bollard::errors::Error),
-    #[error("Could not remove zip folder")]
-    ZipError(String),
 }
 
 /*
@@ -97,7 +95,6 @@ impl From<CustomError> for AppError {
             CustomError::ContainerNotFound => StatusCode::INTERNAL_SERVER_ERROR,
             CustomError::FailedProxyRequest(_) => StatusCode::INTERNAL_SERVER_ERROR,
             CustomError::DockerError(_) => StatusCode::INTERNAL_SERVER_ERROR,
-            CustomError::ZipError(_) => StatusCode::INTERNAL_SERVER_ERROR,
         };
         let backtrace = Backtrace::new();
         tracing::error!(error.cause = ?err, error.backtrace = ?backtrace);

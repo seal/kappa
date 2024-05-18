@@ -49,7 +49,6 @@ pub async fn delete_container(
         return Err(CustomError::ContainerNotFound.into());
     }
 
-    delete_docker_container_and_image(&container_id).await?;
     // Delete the container from the database
     sqlx::query!(
         r#"
@@ -61,7 +60,7 @@ pub async fn delete_container(
     .execute(&pool)
     .await
     .map_err(|e| CustomError::DatabaseError(e))?;
-
+    delete_docker_container_and_image(&container_id).await?;
     // Remove the container files and docker container
     // (You may need to implement this part based on your specific requirements)
 
@@ -88,78 +87,74 @@ pub async fn trigger_container(
                 .unwrap_or_else(|err| [("error".to_string(), err.to_string())].into())
         })
         .unwrap_or_default();
-    let body_string = match String::from_utf8(body.to_vec()) {
-        Ok(body) => body,
-        Err(_) => "".to_string(), // No body is fine
-    };
 
     let client = Client::new();
+    info!("Sending request to {}", target_uri);
     let response = client
         .request(method.clone(), &target_uri)
         .query(&query_map)
         .headers(header_map.clone())
-        .body(body_string.clone())
+        .body(body.clone())
         .send()
         .await;
+
     match response {
         Ok(response) => {
+            info!(
+                "Got response from container with id {}",
+                container.container_id
+            );
             let status_code = response.status();
             let headers = response.headers().clone();
             let response_body = response
                 .text()
                 .await
-                .map_err(|e| CustomError::FailedProxyRequest(e))?;
-            Ok((status_code, headers, response_body))
+                .map_err(CustomError::FailedProxyRequest)?;
+            Ok((status_code, headers.clone(), response_body))
         }
-        Err(e) => {
+        Err(e) if e.is_connect() => {
             info!(
                 "First connection failed, retrying after starting container, ID {}",
                 container.container_id
             );
-            // If it's a connection issue, most likely the docker container is dead
-            if e.is_connect() {
-                let port = dockerise_container(Uuid::from(container.container_id))
-                    .await
-                    .map_err(|e| CustomError::DockeriseContainerError(e.to_string()))?;
-                // Send the request again after dockerizing the container
-                let client = Client::new();
-                let response = client
-                    .request(method, format!("http://127.0.0.1:{}", port))
-                    .query(&query_map)
-                    .headers(header_map)
-                    .body(body_string)
-                    .send()
-                    .await
-                    .map_err(|e| {
-                        error!(
-                            "failed second proxy request for ID {}",
-                            container.container_id
-                        );
-                        CustomError::FailedProxyRequest(e)
-                    })?;
-                let status_code = response.status();
-                let headers = response.headers().clone();
-                let response_body = response
-                    .text()
-                    .await
-                    .map_err(|e| CustomError::FailedProxyRequest(e))?;
-                sqlx::query!(
-                    r#"
+            let port = dockerise_container(Uuid::from(container.container_id))
+                .await
+                .map_err(|e| CustomError::DockeriseContainerError(e.to_string()))?;
+            let response = client
+                .request(method, format!("http://127.0.0.1:{}", port))
+                .query(&query_map)
+                .headers(header_map)
+                .body(body)
+                .send()
+                .await
+                .map_err(|e| {
+                    error!(
+                        "failed second proxy request for ID {}",
+                        container.container_id
+                    );
+                    CustomError::FailedProxyRequest(e)
+                })?;
+            let status_code = response.status();
+            let headers = response.headers().clone();
+            let response_body = response
+                .text()
+                .await
+                .map_err(CustomError::FailedProxyRequest)?;
+            sqlx::query!(
+                r#"
     UPDATE "container"
     SET port = $1::INTEGER
     WHERE container_id = $2::UUID
     "#,
-                    port,
-                    container.container_id
-                )
-                .execute(&pool)
-                .await
-                .map_err(|e| CustomError::DatabaseError(e))?;
-                Ok((status_code, headers, response_body))
-            } else {
-                Err(CustomError::FailedProxyRequest(e).into())
-            }
+                port,
+                container.container_id
+            )
+            .execute(&pool)
+            .await
+            .map_err(CustomError::DatabaseError)?;
+            Ok((status_code, headers.clone(), response_body))
         }
+        Err(e) => Err(CustomError::FailedProxyRequest(e).into()),
     }
 }
 /*

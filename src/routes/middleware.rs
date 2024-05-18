@@ -27,7 +27,6 @@ pub async fn trigger_auth(
             }
         })?
         .unwrap_or_else(|| "fix");
-    info!("api key {}", api_key);
     let user: Result<User, sqlx::Error> = sqlx::query_as!(
         User,
         r#"

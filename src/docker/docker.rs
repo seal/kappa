@@ -1,10 +1,10 @@
 use anyhow::{anyhow, Error, Result};
 use async_std::stream::StreamExt;
 use bollard::container::{
-    Config, CreateContainerOptions, ListContainersOptions, RemoveContainerOptions,
-    StartContainerOptions,
+    Config, CreateContainerOptions, ListContainersOptions, PruneContainersOptions,
+    RemoveContainerOptions, StartContainerOptions,
 };
-use bollard::image::BuildImageOptions;
+use bollard::image::{BuildImageOptions, PruneImagesOptions, RemoveImageOptions};
 use bollard::models::HostConfig;
 use bollard::models::PortBinding;
 use bollard::Docker;
@@ -14,7 +14,7 @@ use std::fs::File;
 use std::io::prelude::*;
 use std::net::TcpListener;
 use tar::Builder;
-use tracing::info;
+use tracing::{error, info};
 use uuid::Uuid;
 
 use crate::errors::error::CustomError;
@@ -24,31 +24,64 @@ pub async fn delete_docker_container_and_image(container_id: &Uuid) -> Result<()
     let image_name = format!("kappa-go:{}", container_id);
 
     // Force remove the Docker container
-    docker
+    match docker
         .remove_container(
             &container_name,
             Some(RemoveContainerOptions {
+                v: true,
                 force: true,
                 ..Default::default()
             }),
         )
         .await
-        .map_err(|e| CustomError::DockerError(e))?;
-
+    {
+        Ok(_) => (),
+        Err(bollard::errors::Error::DockerResponseServerError {
+            status_code: 404,
+            message: _,
+        }) => {
+            error!("Ignoring container docker remove error ");
+        }
+        Err(e) => return Err(CustomError::DockerError(e)),
+    }
     // Remove the Docker image
+    match docker
+        .remove_image(
+            &image_name,
+            Some(RemoveImageOptions {
+                force: true,
+                noprune: false,
+            }),
+            None,
+        )
+        .await
+    {
+        Ok(_) => (),
+        Err(bollard::errors::Error::DockerResponseServerError {
+            status_code: 404,
+            message: _,
+        }) => {
+            error!("Ignoring image docker remove error ");
+        }
+        Err(e) => return Err(CustomError::DockerError(e)),
+    }
+    // Prune containers
     docker
-        .remove_image(&image_name, None, None)
+        .prune_containers(None::<PruneContainersOptions<String>>)
         .await
         .map_err(|e| CustomError::DockerError(e))?;
-
+    // Prune images
+    docker
+        .prune_images(None::<PruneImagesOptions<String>>)
+        .await
+        .map_err(|e| CustomError::DockerError(e))?;
     // Remove the container files
-    let zip_path = format!("./zip/{}", container_id);
-    std::fs::remove_dir_all(zip_path).map_err(|e| CustomError::ZipError(e.to_string()))?;
+    let _ = std::fs::remove_dir_all(format!("./zip/{}", container_id));
+    let _ = std::fs::remove_file(format!("./zip/{}.zip", container_id));
 
     Ok(())
 }
 pub async fn dockerise_container(id: uuid::Uuid) -> Result<i32, Error> {
-    println!("Got uuid {:?}", id);
     let p = get_available_port();
     let port: u16;
     match p {
@@ -131,6 +164,7 @@ async fn run_docker_container(uuid: &Uuid, port: &u16) -> Result<()> {
         dockerfile: "Dockerfile".to_string(),
         t: image_name.clone(),
         q: true,
+        rm: true,
         ..Default::default()
     };
 

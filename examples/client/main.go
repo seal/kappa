@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"time"
 
 	"github.com/seal/kappa/client"
 )
@@ -24,7 +25,7 @@ func main() {
     "message": "message one",
     "messageTwo": "message two"
 }`)
-
+	time3 := time.Now()
 	resp3, err := container3.TriggerContainer(body3)
 	if err != nil {
 		panic(err)
@@ -37,6 +38,8 @@ func main() {
 	for k, v := range resp3.Headers {
 		log.Println(k, v)
 	}
+	log.Println("Time taken:")
+	log.Println(time.Since(time3))
 	log.Println("--------------------")
 
 	// 2_context.zip
@@ -50,7 +53,7 @@ func main() {
 		panic(err)
 	}
 	log.Printf("Created container with ID: %s\n", container2.ID)
-
+	time2 := time.Now()
 	resp2, err := container2.TriggerContainer(nil)
 	if err != nil {
 		panic(err)
@@ -63,6 +66,9 @@ func main() {
 	for k, v := range resp2.Headers {
 		log.Println(k, v)
 	}
+
+	log.Println("Time taken:")
+	log.Println(time.Since(time2))
 	log.Println("--------------------")
 
 	// 1_string.zip
@@ -76,7 +82,7 @@ func main() {
 		panic(err)
 	}
 	log.Printf("Created container with ID: %s\n", container1.ID)
-
+	time1 := time.Now()
 	resp1, err := container1.TriggerContainer(nil)
 	if err != nil {
 		panic(err)
@@ -89,6 +95,9 @@ func main() {
 	for k, v := range resp1.Headers {
 		log.Println(k, v)
 	}
+
+	log.Println("Time taken:")
+	log.Println(time.Since(time1))
 	log.Println("--------------------")
 
 	log.Println("Deleting all containers now ")
