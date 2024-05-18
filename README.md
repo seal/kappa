@@ -1,44 +1,147 @@
-This repository contains the code for my implementation of AWS lambda written in Rust & GoLang
+# Kappa - AWS Lambda Implementation in Rust & GoLang
 
-** This project is incomplete and currently in development*
+This repository contains the code for my implementation of AWS Lambda written in Rust and GoLang.
 
-## Create a function
-View example-main.go to get the idea of creating a function 
+**Note: This project is currently in development and may be incomplete.**
 
-## Running the code
-### Postgres
-```bash
-docker-compose up -d 
+## Table of Contents
+- [Getting Started](#getting-started)
+  - [Prerequisites](#prerequisites)
+  - [Installation](#installation)
+- [Usage](#usage)
+  - [Creating a Function](#creating-a-function)
+  - [Running the Code](#running-the-code)
+    - [Postgres](#postgres)
+    - [Rust](#rust)
+- [Client Example](#client-example)
+- [Server Example](#server-example)
+- [Functionality](#functionality)
+- [Contributing](#contributing)
+- [License](#license)
+
+## Getting Started
+
+These instructions will help you set up the project on your local machine for development and testing purposes.
+
+### Prerequisites
+
+Make sure you have the following installed:
+- [Rust](https://www.rust-lang.org/tools/install)
+- [GoLang](https://golang.org/doc/install)
+- [Docker](https://www.docker.com/get-started)
+
+### Installation
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/seal/kappa.git
+   ```
+
+2. Change to the project directory:
+   ```bash
+   cd kappa
+   ```
+
+## Usage
+
+### Creating a Function
+
+View /examples/server/* for an example 
+
+Then zip via:
 ```
-### Rust 
-```bash
-cargo run 
+zip -r my_folder.zip my_folder/*
 ```
-Http server will be created on port 3000 
+Upload via GoLang code
 
+### Running the Code
 
+#### Postgres
+Start the Postgres database using Docker Compose:
+```bash
+docker-compose up -d
+```
 
-## Functionality 
-Run the go program in test/ for testing functionality 
-This includes create user, container, run container etc
+#### Rust
+Run the Rust code:
+```bash
+cargo run
+```
+The HTTP server will be created on port 3000.
 
+## Client Example
 
-#### For gRPC things use Tonic, not default package
-1 - Create logging system of sorts, gRPC system ? 
+Here's an example of how to use the client:
 
-2 - Split program - Dockerise and running should be a seperate program to allow for multiple systems running later on
-    ( Rest gateway to main PC, gRPC to container running machines) 
-    (Create two bin's, client & server essentially)
+```go
+// examples/client/main.go
+package main
 
-3 - Validate file names on creation, main.go etc?
+// ... (client code omitted for brevity) ...
 
-4 - Currently no validation, just assumes it'll work 
+func main() {
+    c := client.NewClient("http://localhost:3000", "e1f11936-2004-46ee-b310-84ddb8fb8d14")
 
-5 - Add proper logging no eprintln in docker functions 
-^^ .... gRPC ? 
+    // Create and trigger containers for different ZIP files
+    // ... (code omitted for brevity) ...
 
+    // Delete all containers
+    containers, err := c.GetContainers()
+    if err != nil {
+        panic(err)
+    }
+    for _, container := range containers {
+        log.Println("Deleting ID", container.ID, " - with language ", container.Language)
+        err := container.Delete()
+        if err != nil {
+            panic(err)
+        }
+    }
+}
+```
 
-### Tests
-All tests are written in Go, to test rust http functionality 
-Re-write in Rust at later date.
+## Server Example
 
+Here's an example of how to implement the server:
+
+```go
+// examples/client/main.go
+package main
+
+```
+
+```go
+//examples/server/main.go
+func main() {
+    utils.Start(HandleRequestContext)
+    //	utils.Start(HandleRequestString)
+    //utils.Start(HandleRequestEvent)
+}
+
+// HandleRequestString returns a string response
+func HandleRequestString(ctx context.Context) (string, error) {
+    return "here", nil
+}
+
+// HandleRequestContext returns an IO reader response
+func HandleRequestContext(ctx context.Context) (io.Reader, error) {
+    // ... (code omitted for brevity) ...
+}
+
+// HandleRequestEvent handles a custom event struct
+func HandleRequestEvent(ctx context.Context, event MyEvent) (Response, error) {
+    return Response{MessageOne: event.Message, MessageTwo: event.MessageTwo}, nil
+}
+```
+
+## Functionality
+
+Run the /examples/client/main.go for examples
+
+## Contributing
+
+Contributions are welcome! If you find any issues or have suggestions for improvements, please open an issue or submit a pull request.
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).
