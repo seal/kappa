@@ -46,13 +46,11 @@ func (cv ContextValues) MarshalJSON() ([]byte, error) {
 	})
 }
 func invokeDetails(r *http.Request, b []byte) invoke {
-	log.Println(r.URL.RawQuery)
 	i := invoke{
-		id:      r.URL.Query().Get("id"),
+		id:      r.URL.Query().Get("container_id"),
 		payload: b,
 		headers: r.Header.Clone(),
 	}
-
 	return i
 }
 func Start(handler interface{}) {

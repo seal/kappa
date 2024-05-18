@@ -137,7 +137,9 @@ func triggerContainer(c []container) {
 	if err != nil {
 		panic(err)
 	}
-	log.Println(string(body))
+	log.Println("-------------------------")
+	log.Println("Triggered container response:\n", string(body))
+	log.Println("-------------------------")
 }
 
 func createContainer(language string, port int, filePath string) {

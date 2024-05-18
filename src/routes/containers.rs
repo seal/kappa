@@ -79,25 +79,34 @@ pub async fn trigger_container(
     body: Bytes,
 ) -> Result<(StatusCode, HeaderMap, String), AppError> {
     let target_uri = format!("http://127.0.0.1:{}", container.port.unwrap_or(0));
-    let query = query.0.map(|query_str| {
-        serde_qs::from_str::<HashMap<String, String>>(&query_str)
-            .unwrap_or_else(|err| [("error".to_string(), err.to_string())].into())
-    });
+    let query_map: HashMap<String, String> = query
+        .0
+        .as_deref()
+        .map(|query_str| {
+            serde_qs::from_str(query_str)
+                .unwrap_or_else(|err| [("error".to_string(), err.to_string())].into())
+        })
+        .unwrap_or_default();
+    let query_string = serde_qs::to_string(&query_map).map_err(|err| AppError {
+        status_code: StatusCode::INTERNAL_SERVER_ERROR,
+        message: format!("Error constructing query string: {}", err),
+    })?;
     let body_string = match String::from_utf8(body.to_vec()) {
         Ok(body) => body,
         Err(_) => "".to_string(), // No body is fine
     };
+
     let client = Client::new();
     let response = client
         .request(method.clone(), &target_uri)
-        .query(&query)
+        .query(&query_string)
         .headers(header_map.clone())
         .body(body_string.clone())
         .send()
         .await;
-
     match response {
         Ok(response) => {
+            info!("Fianl URL {}", response.url());
             let status_code = response.status();
             let headers = response.headers().clone();
             let response_body = response
@@ -107,6 +116,10 @@ pub async fn trigger_container(
             Ok((status_code, headers, response_body))
         }
         Err(e) => {
+            info!(
+                "First connection failed, retrying after starting container, ID {}",
+                container.container_id
+            );
             // If it's a connection issue, most likely the docker container is dead
             if e.is_connect() {
                 let port = dockerise_container(Uuid::from(container.container_id))
@@ -116,7 +129,7 @@ pub async fn trigger_container(
                 let client = Client::new();
                 let response = client
                     .request(method, format!("http://127.0.0.1:{}", port))
-                    .query(&query)
+                    .query(&query_string)
                     .headers(header_map)
                     .body(body_string)
                     .send()
