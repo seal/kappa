@@ -3,32 +3,27 @@ package client
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"mime/multipart"
 	"net/http"
 	"net/textproto"
+	"net/url"
 	"os"
 )
-
-type Error string
-
-const (
-	APIKeyUnauthorized  Error = "unauthorized api key"
-	Buildrequest        Error = "could not build request"
-	ResponseBodyInvalid Error = "could not read body"
-)
-
-func (e Error) Error() string {
-	return string(e)
-}
 
 // Client represents the client for interacting with the API.
 type Client struct {
 	baseURL    string
 	apiKey     string
 	httpClient *http.Client
+}
+
+// ContainerOptions represents the options for creating a container.
+type ContainerOptions struct {
+	Language string
+	Filepath string
+	Name     string
 }
 
 // NewClient creates a new client with the specified base URL and API key.
@@ -40,48 +35,52 @@ func NewClient(baseURL, apiKey string) *Client {
 	}
 }
 
-func (c *Client) CreateContainer(language, filePath string) (*Container, error) {
+// CreateContainer creates a new container with the provided options.
+func (c *Client) CreateContainer(opts ContainerOptions) (*Container, error) {
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
 
 	header := make(textproto.MIMEHeader)
 	header.Set("API-KEY", c.apiKey)
 
-	file, err := os.Open(filePath)
+	file, err := os.Open(opts.Filepath)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to open file: %w", err)
 	}
 	defer file.Close()
 
-	part, err := writer.CreateFormFile("file", filePath)
+	part, err := writer.CreateFormFile("file", opts.Filepath)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create form file: %w", err)
 	}
 	_, err = io.Copy(part, file)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to copy file: %w", err)
 	}
 
 	err = writer.Close()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to close writer: %w", err)
 	}
+	queryParams := url.Values{}
+	queryParams.Add("language", opts.Language)
+	queryParams.Add("name", opts.Name)
 
-	req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s/containers?language=%s", c.baseURL, language), body)
+	req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s/containers?%s", c.baseURL, queryParams.Encode()), body)
 	if err != nil {
-		return nil, Buildrequest
+		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 	req.Header.Set("Content-Type", writer.FormDataContentType())
 	req.Header.Set("API-KEY", c.apiKey)
 
 	res, err := c.httpClient.Do(req)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to send request: %w", err)
 	}
 	defer res.Body.Close()
 
 	if res.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("status code not 200: %d", res.StatusCode)
+		return nil, fmt.Errorf("unexpected status code: %d", res.StatusCode)
 	}
 
 	var response struct {
@@ -90,41 +89,46 @@ func (c *Client) CreateContainer(language, filePath string) (*Container, error) 
 	}
 	err = json.NewDecoder(res.Body).Decode(&response)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 
 	container := &Container{
 		Client:   c,
 		ID:       response.ContainerID,
-		Language: language,
+		Language: opts.Language,
+		Name:     opts.Name,
 	}
 
 	return container, nil
 }
+
+// GetContainers retrieves a list of containers.
 func (c *Client) GetContainers() ([]Container, error) {
 	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/containers", c.baseURL), nil)
 	if err != nil {
-		return nil, Buildrequest
+		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("API-KEY", c.apiKey)
 	res, err := c.httpClient.Do(req)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to send request: %w", err)
 	}
-	if res.StatusCode == 400 {
-		return nil, APIKeyUnauthorized
+	defer res.Body.Close()
+
+	if res.StatusCode == http.StatusUnauthorized {
+		return nil, fmt.Errorf("unauthorized API key")
 	} else if res.StatusCode != http.StatusOK {
-		return nil, errors.New(fmt.Sprintf("Unknown status code %d", res.StatusCode))
+		return nil, fmt.Errorf("unexpected status code: %d", res.StatusCode)
 	}
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
-		return nil, ResponseBodyInvalid
+		return nil, fmt.Errorf("failed to read response body: %w", err)
 	}
 	var containers []Container
 	err = json.Unmarshal(body, &containers)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to unmarshal response: %w", err)
 	}
 	for i := range containers {
 		containers[i].Client = c
@@ -132,18 +136,22 @@ func (c *Client) GetContainers() ([]Container, error) {
 	return containers, nil
 }
 
+// Container represents a container.
 type Container struct {
 	*Client
 	ID       string `json:"container_id"`
 	Language string `json:"language"`
+	Name     string `json:"name"`
 }
 
+// ContainerResponse represents the response from a container trigger.
 type ContainerResponse struct {
 	StatusCode int
 	Body       []byte
 	Headers    http.Header
 }
 
+// TriggerContainer triggers the container with the provided body.
 func (c *Container) TriggerContainer(body []byte) (*ContainerResponse, error) {
 	var req *http.Request
 	var err error
@@ -154,7 +162,7 @@ func (c *Container) TriggerContainer(body []byte) (*ContainerResponse, error) {
 		req, err = http.NewRequest(http.MethodPost, fmt.Sprintf("%s/trigger", c.baseURL), nil)
 	}
 	if err != nil {
-		return nil, Buildrequest
+		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 
 	req.Header.Set("Content-Type", "application/json")
@@ -167,16 +175,13 @@ func (c *Container) TriggerContainer(body []byte) (*ContainerResponse, error) {
 
 	res, err := c.httpClient.Do(req)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to send request: %w", err)
 	}
 	defer res.Body.Close()
 
 	responseBody, err := io.ReadAll(res.Body)
-	if err != nil {
-		// Some requests have no body
-		if !errors.Is(err, io.EOF) {
-			return nil, err
-		}
+	if err != nil && err != io.EOF {
+		return nil, fmt.Errorf("failed to read response body: %w", err)
 	}
 
 	response := &ContainerResponse{
@@ -187,10 +192,12 @@ func (c *Container) TriggerContainer(body []byte) (*ContainerResponse, error) {
 
 	return response, nil
 }
+
+// Delete deletes the container.
 func (c *Container) Delete() error {
 	req, err := http.NewRequest(http.MethodDelete, fmt.Sprintf("%s/containers", c.Client.baseURL), nil)
 	if err != nil {
-		return Buildrequest
+		return fmt.Errorf("failed to create request: %w", err)
 	}
 
 	values := req.URL.Query()
@@ -202,14 +209,15 @@ func (c *Container) Delete() error {
 
 	res, err := c.Client.httpClient.Do(req)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to send request: %w", err)
 	}
 	defer res.Body.Close()
 
 	if res.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(res.Body)
-		return fmt.Errorf("status code not 200: %d, body: %s", res.StatusCode, string(body))
+		return fmt.Errorf("unexpected status code: %d, body: %s", res.StatusCode, string(body))
 	}
 
 	return nil
 }
+

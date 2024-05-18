@@ -1,4 +1,4 @@
-use crate::docker::docker::dockerise_container;
+use crate::docker::docker::{delete_docker_container_and_image, dockerise_container};
 use axum::http::{HeaderMap, Method};
 use axum::response::Result;
 use reqwest::Client;
@@ -49,6 +49,7 @@ pub async fn delete_container(
         return Err(CustomError::ContainerNotFound.into());
     }
 
+    delete_docker_container_and_image(&container_id).await?;
     // Delete the container from the database
     sqlx::query!(
         r#"
@@ -316,13 +317,14 @@ pub async fn new_container(
     // DB values if any-other part of the request failed.
     sqlx::query!(
         r#"
-        insert into "container"(container_id, language, user_id, port)
-        values ($1::UUID, $2::TEXT, $3::UUID, $4::INTEGER)
+        insert into "container"(container_id, language, user_id, port, name)
+        values ($1::UUID, $2::TEXT, $3::UUID, $4::INTEGER, $5::TEXT)
     "#,
         container_id,
         query.language,
         user.user_id,
-        port
+        port,
+        query.name
     )
     .execute(&pool)
     .await

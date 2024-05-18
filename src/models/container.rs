@@ -7,10 +7,12 @@ pub struct Container {
     pub language: String,
     pub user_id: Option<Uuid>,
     pub port: Option<i32>,
+    pub name: String,
 }
 #[derive(Deserialize)]
 pub struct NewContainer {
     pub language: String,
+    pub name: String,
 }
 #[derive(Deserialize)]
 pub struct QueryContainer {

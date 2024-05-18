@@ -2,14 +2,12 @@ use axum::middleware;
 use tracing_subscriber::Registry;
 
 use axum::routing::delete;
-use axum::routing::get_service;
 use axum::{
     routing::{get, post},
     Router,
 };
 use routes::middleware::{api_key_auth, trigger_auth};
 use std::time::Duration;
-use tower_http::services::ServeDir;
 use tracing_subscriber::layer::SubscriberExt;
 
 use std::{fs::File, sync::Arc};
@@ -62,9 +60,6 @@ async fn main() {
     tracing::subscriber::set_global_default(subscriber)
         .expect("Failed to set global default subscriber");
 
-    let ui_service = get_service(ServeDir::new("ui"));
-    let ui_router = Router::new().nest_service("/", ui_service);
-
     let protected = Router::new()
         .route("/user", get(routes::user::get_user))
         .route("/containers", post(routes::containers::new_container))
@@ -80,9 +75,7 @@ async fn main() {
         .layer(middleware::from_fn_with_state(pool.clone(), trigger_auth));
     let app = Router::new()
         .route("/user", post(routes::user::create_user))
-        .route("/user-htmx", post(routes::user::create_user_htmx))
         .route("/error", get(routes::health::error_handler))
-        .nest("/ui", ui_router)
         .merge(protected)
         .merge(trigger)
         .with_state(pool);

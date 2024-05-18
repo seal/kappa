@@ -12,34 +12,6 @@ pub async fn get_user(Extension(user): Extension<User>) -> Result<Json<User>, Ap
     Ok(Json(user))
 }
 
-pub async fn create_user_htmx(
-    State(pool): State<PgPool>,
-    Json(payload): Json<CreateUser>,
-) -> Result<String, AppError> {
-    info!("Creating user with username {}", payload.username);
-    let api_key = Uuid::new_v4();
-
-    sqlx::query!(
-        r#"
-            insert into "user"(api_key, username)
-            values ($1, $2)
-        "#,
-        api_key.to_string(),
-        payload.username
-    )
-    .execute(&pool)
-    .await
-    .map_err(|e| {
-        info!("Error inserting user: {}", e);
-        AppError {
-            status_code: StatusCode::INTERNAL_SERVER_ERROR,
-            message: format!("Error inserting into user: {}", e),
-        }
-    })?;
-
-    Ok(api_key.to_string())
-}
-
 pub async fn create_user(
     State(pool): State<PgPool>,
     Json(payload): Json<CreateUser>,

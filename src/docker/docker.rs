@@ -1,7 +1,8 @@
 use anyhow::{anyhow, Error, Result};
 use async_std::stream::StreamExt;
 use bollard::container::{
-    Config, CreateContainerOptions, ListContainersOptions, StartContainerOptions,
+    Config, CreateContainerOptions, ListContainersOptions, RemoveContainerOptions,
+    StartContainerOptions,
 };
 use bollard::image::BuildImageOptions;
 use bollard::models::HostConfig;
@@ -16,6 +17,36 @@ use tar::Builder;
 use tracing::info;
 use uuid::Uuid;
 
+use crate::errors::error::CustomError;
+pub async fn delete_docker_container_and_image(container_id: &Uuid) -> Result<(), CustomError> {
+    let docker = Docker::connect_with_local_defaults().map_err(|e| CustomError::DockerError(e))?;
+    let container_name = format!("kappa-container-{}", container_id);
+    let image_name = format!("kappa-go:{}", container_id);
+
+    // Force remove the Docker container
+    docker
+        .remove_container(
+            &container_name,
+            Some(RemoveContainerOptions {
+                force: true,
+                ..Default::default()
+            }),
+        )
+        .await
+        .map_err(|e| CustomError::DockerError(e))?;
+
+    // Remove the Docker image
+    docker
+        .remove_image(&image_name, None, None)
+        .await
+        .map_err(|e| CustomError::DockerError(e))?;
+
+    // Remove the container files
+    let zip_path = format!("./zip/{}", container_id);
+    std::fs::remove_dir_all(zip_path).map_err(|e| CustomError::ZipError(e.to_string()))?;
+
+    Ok(())
+}
 pub async fn dockerise_container(id: uuid::Uuid) -> Result<i32, Error> {
     println!("Got uuid {:?}", id);
     let p = get_available_port();

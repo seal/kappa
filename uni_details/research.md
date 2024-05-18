@@ -162,3 +162,16 @@ pub async fn trigger_container(
 }
 ```
 REMOVE CACHE THING
+
+
+
+
+
+Docker remove 
+```
+docker stop $(docker ps -aq) && docker rm $(docker ps -aq)
+```
+then
+```
+docker system prune -a --volumes
+```
