@@ -97,7 +97,7 @@ func deleteContainer(containerID string) {
 
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("API-KEY", apiKey)
-
+	log.Println(req.URL)
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {

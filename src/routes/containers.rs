@@ -334,7 +334,6 @@ pub async fn get_containers(
     Extension(user): Extension<User>,
     State(pool): State<PgPool>,
 ) -> Result<Json<Vec<Container>>, AppError> {
-    println!("User in func{:?}", user);
     let containers = sqlx::query_as!(
         Container,
         r#"
