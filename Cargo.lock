@@ -1357,6 +1357,8 @@ dependencies = [
  "http",
  "hyper",
  "hyper-util",
+ "log",
+ "rand",
  "reqwest",
  "serde",
  "serde_json",
