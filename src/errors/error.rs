@@ -41,7 +41,7 @@ pub enum CustomError {
     FailedProxyRequest(#[from] reqwest::Error),
     #[error("Container not found or does not belong to user")]
     ContainerNotFound,
-    #[error("Could not remove image / container")]
+    #[error("Could not remove image / container: {0}")]
     DockerError(#[from] bollard::errors::Error),
 }
 

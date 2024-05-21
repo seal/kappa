@@ -9,13 +9,13 @@ import (
 
 func main() {
 	// Register a new user via:
-	api_key, err := client.CreateUser("http://localhost:3000", "username_here")
-	if err != nil {
-		//Handle error
-	} else {
-		log.Println("registered and got api key", api_key)
-	}
-	c := client.NewClient("http://localhost:3000", "e1f11936-2004-46ee-b310-84ddb8fb8d14")
+	//api_key, err := client.CreateUser("http://localhost:3000", "username_here")
+	//if err != nil {
+	//Handle error
+	//} else {
+	//log.Println("registered and got api key", api_key)
+	//}
+	c := client.NewClient("http://localhost:3000", "85ebefa0-dfe7-4c3a-a545-313664d64f8e")
 
 	// 3_json.zip
 	log.Println("Getting containers for 3_json.zip")

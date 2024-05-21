@@ -9,6 +9,7 @@ use bollard::models::HostConfig;
 use bollard::models::PortBinding;
 use bollard::Docker;
 use bytes::Bytes;
+use lazy_static::lazy_static;
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::prelude::*;
@@ -18,7 +19,10 @@ use tracing::{error, info};
 use uuid::Uuid;
 
 use crate::errors::error::CustomError;
-pub async fn delete_docker_container_and_image(container_id: &Uuid) -> Result<(), CustomError> {
+pub async fn delete_docker_container_and_image(
+    container_id: &Uuid,
+    container_port: &i32,
+) -> Result<(), CustomError> {
     let docker = Docker::connect_with_local_defaults().map_err(|e| CustomError::DockerError(e))?;
     let container_name = format!("kappa-container-{}", container_id);
     let image_name = format!("kappa-go:{}", container_id);
@@ -78,6 +82,7 @@ pub async fn delete_docker_container_and_image(container_id: &Uuid) -> Result<()
     // Remove the container files
     let _ = std::fs::remove_dir_all(format!("./zip/{}", container_id));
     let _ = std::fs::remove_file(format!("./zip/{}.zip", container_id));
+    remove_port_from_used(container_port.clone() as u16);
 
     Ok(())
 }
@@ -101,23 +106,43 @@ pub async fn dockerise_container(id: uuid::Uuid) -> Result<i32, Error> {
     info!("Successfully built and started docker container");
     Ok((port).try_into().unwrap())
 }
+use std::sync::Mutex;
+
+lazy_static! {
+    static ref USED_PORTS: Mutex<Vec<u16>> = Mutex::new(Vec::new());
+}
 
 fn local_port_available(port: u16) -> bool {
-    match TcpListener::bind(("127.0.0.1", port)) {
-        Ok(_) => true,
-        Err(_) => false,
-    }
+    let used_ports = USED_PORTS.lock().unwrap();
+    !used_ports.contains(&port)
+        && match TcpListener::bind(("127.0.0.1", port)) {
+            Ok(_) => true,
+            Err(_) => false,
+        }
 }
 
 fn get_available_port() -> Option<u16> {
     let mut x = 5000; // 5000-6000
     while x < 6000 {
         if local_port_available(x) {
+            add_port_to_used(x);
             return Some(x);
         }
         x += 1;
     }
-    return None;
+    None
+}
+
+fn add_port_to_used(port: u16) {
+    let mut used_ports = USED_PORTS.lock().unwrap();
+    used_ports.push(port);
+}
+
+fn remove_port_from_used(port: u16) {
+    let mut used_ports = USED_PORTS.lock().unwrap();
+    if let Some(index) = used_ports.iter().position(|&p| p == port) {
+        used_ports.remove(index);
+    }
 }
 
 async fn run_docker_container(uuid: &Uuid, port: &u16) -> Result<()> {
@@ -214,7 +239,6 @@ async fn run_docker_container(uuid: &Uuid, port: &u16) -> Result<()> {
 fn create_dockerfile(uuid: &Uuid) -> Result<(), anyhow::Error> {
     let filename = format!("./zip/{}/Dockerfile", uuid);
     let dockerfile = r#"FROM golang:1.22.1-alpine as golang
-ARG CACHEBUST=1
 WORKDIR /app
 COPY . . 
 RUN go mod init main.go && go mod tidy && go get .

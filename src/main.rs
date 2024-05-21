@@ -22,7 +22,6 @@ mod docker;
 mod errors;
 mod models;
 mod routes;
-mod utils;
 
 async fn create_app(pool: PgPool) -> Router {
     let protected = Router::new()
@@ -65,12 +64,12 @@ async fn main() {
         .await
         .expect("can't connect to database");
 
-    let metrics_layer = /* ... */ filter::LevelFilter::DEBUG;
+    let metrics_layer = /* ... */ filter::LevelFilter::ERROR;
 
     let subscriber = Registry::default()
         .with(
             stdout_log
-                .with_filter(filter::LevelFilter::DEBUG)
+                .with_filter(filter::LevelFilter::ERROR)
                 .and_then(debug_log)
                 .with_filter(filter::filter_fn(|metadata| {
                     !metadata.target().starts_with("metrics")

@@ -44,7 +44,6 @@ pub async fn delete_container(
     .fetch_optional(&pool)
     .await
     .map_err(|e| CustomError::DatabaseError(e))?;
-
     if container.is_none() {
         return Err(CustomError::ContainerNotFound.into());
     }
@@ -60,9 +59,8 @@ pub async fn delete_container(
     .execute(&pool)
     .await
     .map_err(|e| CustomError::DatabaseError(e))?;
-    delete_docker_container_and_image(&container_id).await?;
+    delete_docker_container_and_image(&container_id, &container.unwrap().port.unwrap()).await?;
     // Remove the container files and docker container
-    // (You may need to implement this part based on your specific requirements)
 
     Ok(Json(ReturnMessage {
         message: "Successfully deleted container".to_string(),
