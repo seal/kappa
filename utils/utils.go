@@ -3,7 +3,6 @@ package utils
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -14,6 +13,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	jsoniter "github.com/json-iterator/go"
 )
 
 // Pretend there's a server here
@@ -29,6 +29,8 @@ type ContextValues struct {
 	ID      string      `json:"id"`
 	Headers http.Header `json:"headers"`
 }
+
+var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
 // MarshalJSON custom marshaller for ContextValues
 func (cv ContextValues) MarshalJSON() ([]byte, error) {
