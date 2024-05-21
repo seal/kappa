@@ -61,7 +61,7 @@ func stressTestTrigger(container *client.Container) {
 		go func() {
 			defer wg.Done()
 			for j := 0; j < iterations; j++ {
-				resp, err := container.TriggerContainer([]byte(`{
+				_, err := container.TriggerContainer([]byte(`{
     "message": "message one",
     "messageTwo": "message two"
 }`))
@@ -69,7 +69,6 @@ func stressTestTrigger(container *client.Container) {
 					log.Println("Error triggering container:", err)
 					continue
 				}
-				log.Println(string(resp.Body))
 			}
 		}()
 	}

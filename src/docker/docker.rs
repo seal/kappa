@@ -241,7 +241,8 @@ fn create_dockerfile(uuid: &Uuid) -> Result<(), anyhow::Error> {
     let dockerfile = r#"FROM golang:1.22.1-alpine as golang
 WORKDIR /app
 COPY . . 
-RUN go mod init main.go && go mod tidy && go get .
+RUN go mod init main.go && go mod tidy 
+RUN go get .
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /server . 
 FROM gcr.io/distroless/static-debian11
 COPY --from=golang /server .
