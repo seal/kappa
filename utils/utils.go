@@ -16,7 +16,6 @@ import (
 	jsoniter "github.com/json-iterator/go"
 )
 
-// Pretend there's a server here
 type invoke struct {
 	id      string
 	payload []byte
@@ -131,57 +130,83 @@ type jsonOutBuffer struct {
 	*bytes.Buffer
 }
 
+// For readability
+// type handlerFunc func(context.Context, []byte) (io.Reader, error)
 func reflectHandler(f interface{}) handlerFunc {
 	handler := reflect.ValueOf(f)
 	handlerType := reflect.TypeOf(f)
+	// If not function, return, remember we need a function that is called
 	if handlerType.Kind() != reflect.Func {
 		return errorHandler(errors.New("Not a function"))
 	}
 
+	// If it takes *context* ( id, headers etc)
 	takesContext, err := handlerTakesContext(handlerType)
 	if err != nil {
 		return errorHandler(err)
 	}
+	// Create a buffer to store outputs of function
 	out := &jsonOutBuffer{bytes.NewBuffer(nil)}
-
+	// Return a common form of function
 	return func(ctx context.Context, payload []byte) (io.Reader, error) {
+		// Decoder for stuff coming in
 		in := bytes.NewBuffer(payload)
 		decoder := json.NewDecoder(in)
+		//Encoder for stuff going out
 		encoder := json.NewEncoder(out)
-		decoder.DisallowUnknownFields()
+		// This means *extra* fields will cause an error
+		/*
 
+			type Person struct {
+			    Name string `json:"name"`
+			    Age  int    `json:"age"`
+			}
+			with  json : {"name": "John", "age": 30, "city": "New York"}
+			will cause an error
+		*/
+		decoder.DisallowUnknownFields()
+		// Create the arguments that we will "call" the function with
 		var args []reflect.Value
+		// If the first arg is context, append it
 		if takesContext {
 			args = append(args, reflect.ValueOf(ctx))
 		}
 		// 1 / two values
+		// If 1 value ( no context) or two values,
 		if (handlerType.NumIn() == 1 && !takesContext) || handlerType.NumIn() == 2 {
+			// Create instance of handler type
 			eventType := handlerType.In(handlerType.NumIn() - 1)
 			event := reflect.New(eventType)
-
+			// Decode the type into the json buffer
 			if err := decoder.Decode(event.Interface()); err != nil {
 				return nil, err
 			}
+			// Append arg
 			args = append(args, event.Elem())
 		}
-
+		// Prepare the response
 		response := handler.Call(args)
 		if len(response) > 0 {
+			// If there's response, and there's an error, return it
 			if errVal, ok := response[len(response)-1].Interface().(error); ok && errVal != nil {
 				return nil, errVal
 			}
 		}
+		// If there's a value returned, create an interface from it and cast response to it
 		var val interface{}
 		if len(response) > 1 {
 			val = response[0].Interface()
 		}
+		// Encode the value with the json encoder
 		if err := encoder.Encode(val); err != nil {
 			// if response is not JSON serializable, but the response type is a reader, return it as-is
 			if reader, ok := val.(io.Reader); ok {
 				return reader, nil
 			}
+			//not json serializable, and not a reader, aka error
 			return nil, err
 		}
+		// If it's "encoded" an empty reader, return the reader not the {}
 		if reader, ok := val.(io.Reader); ok {
 			// back-compat, don't return the reader if the value serialized to a non-empty json
 			if strings.HasPrefix(out.String(), "{}") {

@@ -1,5 +1,5 @@
 {
-  description = "Cardamon Flake ";
+  description = "Kappa flake";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
