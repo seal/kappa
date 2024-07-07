@@ -2,6 +2,9 @@
 
 This repository contains the code for my implementation of AWS Lambda written in Rust and GoLang.
 
+## TODO / In Development 
+- Next.js UI 
+- Remove need for docker ( Rust containers ??? ) 
 **Note: This project is currently in development and may be incomplete.**
 
 ## Table of Contents
