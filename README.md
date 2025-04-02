@@ -37,7 +37,7 @@ Make sure you have the following installed:
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/seal/kappa.git
+   git clone https://github.com/will-x86/kappa.git
    ```
 
 2. Change to the project directory:
